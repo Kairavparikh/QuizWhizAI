@@ -1,59 +1,134 @@
-The project that uses AI to generate quizzes.
+# QuizWhizAI 🧠
 
+An AI-powered quiz generation platform that transforms documents into interactive learning experiences.
 
-## Tech Stack 
+![QuizWhizAI Screenshot Quiz Screen](/images/quiz.png)
+![QuizWhizAI Screenshot Dashboard](/images/dashboard.png)
+![QuizWhizAI Screenshot Billing](/images/billing.png)
 
-- Next-auth - Authentication
-- Shadcn ui - ui library
-- Open Al - AI Integration
-- Langchain - LLM Framework
-- Drizzle - Orm
-- PostgreSQL - Database
-- Supabase - Database hosting
-- Stripe - Payments
-- Tanstack - Table
-- Typescript - Type Checking
-- Vercel - Deployment
-- Stripe - Payments
-- Zod - Schema Validation
+PUBLIC LINK https://quiz-whiz-ai.vercel.app/
+## ✨ Features
 
-## Getting Started
+- **AI-Powered Quiz Generation**: Upload any document and instantly generate personalized quizzes using OpenAI's GPT-4
+- **Interactive Learning Experience**: Real-time scoring, progress tracking, and immediate feedback on answers
+- **Secure Authentication**: Google OAuth integration with NextAuth.js
+- **Subscription Management**: Stripe-powered payment processing with real-time webhook handling
+- **Analytics Dashboard**: Comprehensive user metrics, heat maps, and performance tracking
+- **Responsive Design**: Modern UI built with Tailwind CSS and Shadcn/ui components
 
-First, run the development server:
+## 🚀 Tech Stack
 
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes, Drizzle ORM, PostgreSQL
+- **AI/ML**: OpenAI GPT-4, LangChain
+- **Authentication**: NextAuth.js, Google OAuth
+- **Payments**: Stripe
+- **Database**: PostgreSQL with Supabase hosting
+- **Deployment**: Vercel
+
+## 📊 Impact
+
+- **20+ students** actively using the platform
+- **300+ questions** answered across all quizzes
+- **80+ quizzes** completed with real-time feedback
+
+## 🛠️ Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- PostgreSQL database
+- OpenAI API key
+- Stripe account
+- Google OAuth credentials
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/yourusername/QuizWhizAI.git
+cd QuizWhizAI
+```
+
+2. **Install dependencies**
+```bash
+npm install
+```
+
+3. **Set up environment variables**
+Create a `.env.local` file:
+```env
+# Database
+DATABASE_URL="your-postgresql-url"
+
+# OpenAI
+OPENAI_API_KEY="your-openai-api-key"
+
+# NextAuth
+NEXTAUTH_SECRET="your-nextauth-secret"
+NEXTAUTH_URL="http://localhost:3000"
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# Stripe
+STRIPE_SECRET_KEY="your-stripe-secret-key"
+STRIPE_PUBLISHABLE_KEY="your-stripe-publishable-key"
+STRIPE_WEBHOOK_LOCAL_SECRET="your-stripe-webhook-secret"
+```
+
+4. **Set up the database**
+```bash
+npm run db:generate
+npm run db:push
+```
+
+5. **Run the development server**
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📖 Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+1. **Sign in** with your Google account
+2. **Upload a document** (PDF, DOC, etc.)
+3. **Generate a quiz** - AI creates personalized questions
+4. **Take the quiz** with real-time feedback
+5. **Track your progress** in the analytics dashboard
 
-## Environment Variables
+## 📁 Project Structure
 
-Create a new .env file and add your keys in the following manner:
 ```
-OPENAI_API_KEY=""
-GOOGLE_CLIENT_ID=""
-GOOGLE_CLIENT_SECRET=""
-AUTH_SECRET=""
-DATABASE_URL=""
-NEXT_PUBLIC_PUBLISHABLE_KEY=""
-STRIPE_SECRET_KEY=""
-STRIPE_WEBHOOK_SECRET=""
-STRIPE_WEBHOOK_LOCAL_SERCRET=""
+src/
+├── app/
+│   ├── api/           # API routes
+│   ├── (user)/        # Protected user routes
+│   └── quizz/         # Quiz functionality
+├── components/         # Reusable UI components
+├── db/                # Database schema and connection
+├── lib/               # Utility functions
+└── auth.ts            # NextAuth configuration
 ```
 
-## Deploy on Vercel
+## 🤝 Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- OpenAI for GPT-4 integration
+- Vercel for hosting and deployment
+- Shadcn/ui for beautiful components
+- The amazing open-source community
+
+---
+
+**Built with ❤️ for better learning experiences**
