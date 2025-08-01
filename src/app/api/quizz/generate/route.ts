@@ -19,7 +19,7 @@ export async function POST(req: NextRequest){
         const selectedDocuments = docs.filter((doc) => doc.pageContent !== undefined);
         const texts = selectedDocuments.map((doc) => doc.pageContent);
 
-        const prompt = "given the text which is a summary of the document, generate a quizz based on the text. Return json only that contains a quiz object with fields: name, description and questions. The must be four options and questions is an array of objects with fields: questionText, answers. The answer is an array of objects with fields: answerText, isCorrect."
+        const prompt = "given the text which is a summary of the document, generate a quizz based on the text. Return json only that contains a quiz object with fields: name, description and questions. The correct answer option should be varied within the four options. The must be four options and questions is an array of objects with fields: questionText, answers. The answer is an array of objects with fields: answerText, isCorrect."
 
         if(!process.env.OPENAI_API_KEY){
             return NextResponse.json({ error: "OpenAPIKey not provided"}, {status: 500});
