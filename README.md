@@ -1,10 +1,9 @@
 # QuizWhizAI 🧠
 
 An AI-powered quiz generation platform that transforms documents into interactive learning experiences.
-
-![QuizWhizAI Screenshot Quiz Screen](/images/quiz.png)
-![QuizWhizAI Screenshot Dashboard](/images/dashboard.png)
-![QuizWhizAI Screenshot Billing](https://github.com/Kairavparikh/QuizWhizAI/blob/main/public/images/billing.png)
+<img src="https://github.com/Kairavparikh/QuizWhizAI/blob/main/public/images/quiz.png" alt="QuizWhizAI Screenshot Quiz Screen" width="400" height="300" />
+<img src="https://github.com/Kairavparikh/QuizWhizAI/blob/main/public/images/dashboard.png" alt="QuizWhizAI Screenshot Dashboard" width="400" height="300" />
+<img src="https://github.com/Kairavparikh/QuizWhizAI/blob/main/public/images/billing.png" alt="QuizWhizAI Screenshot Billing" width="400" height="300" />
 PUBLIC LINK https://quiz-whiz-ai.vercel.app/
 ## ✨ Features
 
