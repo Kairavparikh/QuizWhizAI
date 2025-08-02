@@ -4,7 +4,7 @@ An AI-powered quiz generation platform that transforms documents into interactiv
 
 ![QuizWhizAI Screenshot Quiz Screen](/images/quiz.png)
 ![QuizWhizAI Screenshot Dashboard](/images/dashboard.png)
-![QuizWhizAI Screenshot Billing](/images/billing.png)
+![QuizWhizAI Screenshot Billing](QuizWhizAI/quizz-ai-tutorial/public/images/billing.png)
 
 PUBLIC LINK https://quiz-whiz-ai.vercel.app/
 ## ✨ Features
