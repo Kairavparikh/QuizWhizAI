@@ -129,7 +129,7 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
             </ul>
             {isSubscribed ? (
               <Button disabled className="w-full mt-4">
-                You're already Premium
+                You&#39;re already Premium
               </Button>
             ) : (
               <Button onClick={handleUpgrade} className="w-full mt-4">
