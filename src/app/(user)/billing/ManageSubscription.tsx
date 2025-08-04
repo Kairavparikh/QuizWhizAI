@@ -11,20 +11,44 @@ const ManageSubscription = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const redirectToCustomerPortal = async() => {
     setLoading(true);
+    console.log("Manage subscription button clicked");
 
     try{
-        const {url} = await fetch('api/stripe/create-portal', {
+        console.log("Making API call to create-portal");
+        const response = await fetch('api/stripe/create-portal', {
             method: 'POST',
             headers: {
                 'Content-Type' : 'application/json'
             },
-            }).then((res) => res.json());
+            });
+            
+        console.log("Response status:", response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("API error:", errorText);
+            alert(`API Error: ${response.status} - ${errorText}`);
+            setLoading(false);
+            return;
+        }
 
-        router.push(url.url)
+        const data = await response.json();
+        console.log("Response data:", data);
+        
+        if (!data.url) {
+            console.error("No URL in response");
+            alert("No portal URL received");
+            setLoading(false);
+            return;
+        }
+
+        console.log("Redirecting to customer portal");
+        router.push(data.url);
     }
     catch(error){
             setLoading(false);
-        console.log('Subscribe Button Error', error);
+        console.error('Subscribe Button Error', error);
+        alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 }
     return (

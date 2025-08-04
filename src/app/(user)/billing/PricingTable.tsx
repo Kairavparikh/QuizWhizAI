@@ -6,6 +6,8 @@ import { PRICE_ID } from "@/lib/utils";
 
 const PricingTable = () => {
   const handleUpgrade = async () => {
+    console.log("Upgrade button clicked");
+    
     // Check if Stripe key is available
     if (!process.env.NEXT_PUBLIC_PUBLISHABLE_KEY) {
       console.error("Stripe publishable key not found");
@@ -14,6 +16,7 @@ const PricingTable = () => {
     }
 
     try {
+      console.log("Making API call to checkout-session");
       const response = await fetch('/api/stripe/checkout-session', {
         method: 'POST',
         headers: {
@@ -24,7 +27,23 @@ const PricingTable = () => {
         }),
       });
 
-      const { sessionId } = await response.json();
+      console.log("Response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API error:", errorText);
+        alert(`API Error: ${response.status} - ${errorText}`);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Response data:", data);
+      
+      if (!data.sessionId) {
+        console.error("No sessionId in response");
+        alert("No session ID received from server");
+        return;
+      }
       
       // Redirect to Stripe Checkout
       const stripe = await import('@stripe/stripe-js').then(({ loadStripe }) => 
@@ -32,11 +51,20 @@ const PricingTable = () => {
       );
       
       if (stripe) {
-        await stripe.redirectToCheckout({ sessionId });
+        console.log("Redirecting to Stripe checkout with sessionId:", data.sessionId);
+        const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+        
+        if (result.error) {
+          console.error("Stripe redirect error:", result.error);
+          alert(`Stripe error: ${result.error.message}`);
+        }
+      } else {
+        console.error("Stripe failed to load");
+        alert("Stripe failed to load");
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      alert("Error creating checkout session");
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
