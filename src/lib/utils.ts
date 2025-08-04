@@ -27,4 +27,4 @@ export function convertDateToString(date: Date) : string{
 
 }
 
-export const PRICE_ID: string = "price_1Rr03LDE6ktIMFgV30vmtxCH";
+export const PRICE_ID: string = "price_1RsTYaDJtFkaXjyBPwVjXdOV"; // Live price ID for production

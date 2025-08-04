@@ -5,11 +5,13 @@ import {auth} from "@/auth"
 import QuizzesTable, { Quizz } from "./quizzesTable";
 import getUserMetrics from "@/app/actions/getUserMetrics";
 import getHeatMapData from "@/app/actions/getHeatMapData";
+import updateExistingQuizzes from "@/app/actions/updateExistingQuizzes";
 import MetricCard from "./metricCard";
 import Demo from "./heatMap"
 import SubmissionsHeatMap from "./heatMap";
 import SubscribeBtn from "../billing/SubscribeBtn";
 import { PRICE_ID } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 
 const page = async () => {
@@ -42,6 +44,16 @@ const page = async () => {
         {heatMapData ? <SubmissionsHeatMap data={heatMapData.data} /> : null}
         </div>      
     <QuizzesTable quizzes={userQuizzes} />
+    
+    {/* Database maintenance section */}
+    <div className="mt-4 p-4 border rounded-lg">
+      <h3 className="text-lg font-semibold mb-2">Don't see your Quiz?</h3>
+      <form action={updateExistingQuizzes}>
+        <Button type="submit" variant="outline">
+          Update Existing Quizzes
+        </Button>
+      </form>
+    </div>
     </>
     
   );

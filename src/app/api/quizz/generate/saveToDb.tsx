@@ -1,12 +1,14 @@
 import {db} from "@/db"
-import {quizzes, questions as dbQuestions, questionsAnswers} from "@/db/schema"
-import { InferInsertModel } from "drizzle-orm";
+import {quizzes, questions as dbQuestions, questionsAnswers, users} from "@/db/schema"
+import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { isContext } from "vm";
+import { isNull } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 
 type Quizz = InferInsertModel<typeof quizzes>;
 type Question = InferInsertModel<typeof dbQuestions>;
-type Answer = InferInsertModel<typeof questionsAnswers>;
+type Answer = InferSelectModel<typeof questionsAnswers>;
 
 
 interface SaveQuizzData extends Quizz{
@@ -14,13 +16,14 @@ interface SaveQuizzData extends Quizz{
 }
 
 
-export default async function saveQuizz(quizzData:SaveQuizzData) {
+export default async function saveQuizz(quizzData:SaveQuizzData, userId: string) {
     const {name, description, questions} = quizzData;
     const newQuizz = await db 
     .insert(quizzes)
     .values({
         name, 
-        description
+        description,
+        userId
     })
     .returning({
         insertedId: quizzes.id
@@ -50,6 +53,32 @@ export default async function saveQuizz(quizzData:SaveQuizzData) {
         }
 
     })
+
+    // Run database maintenance tasks automatically
+    try {
+        // 1. Update orphaned quizzes (quizzes without userId)
+        await db
+            .update(quizzes)
+            .set({ userId })
+            .where(isNull(quizzes.userId));
+
+        // 2. Ensure freeTrialsUsed column exists and set default for new users
+        await db.execute(sql`
+            ALTER TABLE "user" 
+            ADD COLUMN IF NOT EXISTS "free_trials_used" integer DEFAULT 0
+        `);
+
+        // 3. Update current user's freeTrialsUsed if they don't have the field
+        await db.execute(sql`
+            UPDATE "user" 
+            SET "free_trials_used" = COALESCE("free_trials_used", 0) 
+            WHERE "id" = ${userId}
+        `);
+
+    } catch (error) {
+        console.error("Database maintenance error:", error);
+        // Don't fail the quiz creation if maintenance fails
+    }
 
     return {quizzId};
 }

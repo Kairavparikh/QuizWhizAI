@@ -25,7 +25,7 @@ const Header = async () => {
             <nav className = "px-4 py-2.5">
                 <div className = "flex flex-wrap justify-between items-center mx-auto nax-w-screen-xl">
                     <h1 className = "text-3xl font-bold">
-                        QuiWhizAI
+                        QuizWhizAI
                     </h1>
                 <div>
                 {

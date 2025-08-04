@@ -1,12 +1,14 @@
 import UploadDoc from "../uploadDoc";
 import { auth, signIn } from "@/auth";
 import { getUserSubscriptions } from "@/app/actions/userSubscriptions";
+import { checkFreeTrials } from "@/app/actions/checkFreeTrials";
 import { Lock, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {getStripe} from "@/lib/stripe-client";
 import {useRouter} from "next/navigation";
 import { PRICE_ID } from "@/lib/utils";
 import UpgradePlan from "../UpgradePlan"
+
 const Page = async () => {
   const session = await auth();
   const userId = session?.user?.id;
@@ -14,7 +16,9 @@ const Page = async () => {
     signIn();
     return;
   }
-  const isSubscribed: boolean | undefined  | null= await getUserSubscriptions({ userId });
+  
+  const isSubscribed: boolean | undefined | null = await getUserSubscriptions({ userId });
+  const freeTrialData = await checkFreeTrials();
   
   const onNaviagteToUpgrate = async (price:string) => {
 
@@ -45,14 +49,18 @@ const Page = async () => {
         </h2>
         <UploadDoc />
         </>
+        ) : freeTrialData.canUpload ? (
+        <>
+        <h2 className="text-3xl font-bold mb-4">
+          What do you want to be quizzed about today?
+        </h2>
+        <div className="mb-4 text-sm text-gray-600">
+          Free trials remaining: {freeTrialData.trialsRemaining} of {freeTrialData.limit}
+        </div>
+        <UploadDoc />
+        </>
         ) : (
-          <div className="rounded-md bg-primary-foreground p-10 w-full sm:min-h-80">
-            <div className="flex items-center flex-col cursor-pointer w-full h-full">
-              <div className="flex-1 flex items-center flex-col">
-            </div>
-              <UpgradePlan/>
-            </div>            
-          </div>
+          <UpgradePlan/>
         )}
       </main>
     </div>

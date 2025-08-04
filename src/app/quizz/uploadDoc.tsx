@@ -2,6 +2,7 @@
 import {useState} from "react";
 import {Button} from "@/components/ui/button"
 import {useRouter} from "next/navigation";
+import { incrementFreeTrials } from "@/app/actions/checkFreeTrials";
 
 const UploadDoc = () => {
     const[document, setDocument] = useState<File | null | undefined>(null);
@@ -26,6 +27,10 @@ const UploadDoc = () => {
          if(res.status === 200){
             const data = await res.json();
             const quizzId = data.quizzId;
+            
+            // Increment free trial count on successful quiz generation
+            await incrementFreeTrials();
+            
             router.push(`/quizz/${quizzId}`);
          }
         }

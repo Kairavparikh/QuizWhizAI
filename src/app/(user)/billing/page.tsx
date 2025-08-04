@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import {users} from "@/db/schema";
 import React from 'react'
+import PricingTable from "./PricingTable";
 
 const page = async () => {
     const session = await auth();
@@ -25,7 +26,8 @@ const page = async () => {
             Subscription Details
         </h1>
         <p className="mb-2">You are currently on a {plan} plan</p>
-    <ManageSubscription/>
+        <ManageSubscription/>
+        <PricingTable />
     </div>
     )
 }

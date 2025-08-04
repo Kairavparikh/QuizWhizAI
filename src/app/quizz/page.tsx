@@ -100,7 +100,7 @@ export default function Home(){
                 </header>
             </div>
           <main className="flex justify-center flex-1">
-            {!started ? <h1 className="text-3xl font-bold">Hello World👋</h1> :(
+            {!started ? <h1 className="text-3xl font-bold">Ready to start your quiz? 🧠</h1> :(
                 <div>
                     <h2 className = "text-3xl font-bold">{questions[currentQuestion].questionsText}</h2>
                     <div className = "grid grid-cols-1 gap-6 mt-6">

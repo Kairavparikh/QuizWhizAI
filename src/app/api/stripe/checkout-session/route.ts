@@ -8,6 +8,8 @@ import {users} from "@/db/schema";
 export const POST = async (req: Request) => {
 
     const{price, quantity = 1} = await req.json();
+    console.log("Received price:", price);
+    
     const userSession = await auth();
     const userId = userSession?.user?.id;
 
@@ -30,8 +32,10 @@ export const POST = async (req: Request) => {
         customer = {
             id: user.stripeCustomerId
         };
+        console.log("Using existing customer:", customer.id);
     }
     else{
+        console.log("Creating new customer for user:", userId);
         const customerData: {
             metadata: {
                 dbId: string
@@ -47,6 +51,7 @@ export const POST = async (req: Request) => {
         );
 
         customer = {id :response.id};
+        console.log("Created new customer:", customer.id);
 
         await db.update(users).set({
             stripeCustomerId: customer.id,
@@ -55,8 +60,10 @@ export const POST = async (req: Request) => {
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    console.log("Base URL:", baseUrl);
 
     try{
+        console.log("Creating checkout session with price:", price);
         const session = await stripe.checkout.sessions.create(
             {
                 success_url: `${baseUrl}/billing/payment/success`,
@@ -73,6 +80,7 @@ export const POST = async (req: Request) => {
                 mode: "subscription"
             }
         )
+        console.log("Checkout session created:", session.id);
         if(session){
              return new Response(
                 JSON.stringify({
@@ -84,6 +92,7 @@ export const POST = async (req: Request) => {
              )
         }
         else{
+            console.log("Session creation failed");
             return new Response(
                 JSON.stringify({
                     error: "Failed to create a session"
@@ -95,10 +104,10 @@ export const POST = async (req: Request) => {
         }
     }
     catch(error){
-        console.log("Error creating checkout session", error);
+        console.error("Error creating checkout session:", error);
         return new Response(
                 JSON.stringify({
-                    error,
+                    error: error instanceof Error ? error.message : "Unknown error",
                 }),
                 {
                     status: 500

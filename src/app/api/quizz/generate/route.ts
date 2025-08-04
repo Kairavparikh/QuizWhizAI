@@ -7,7 +7,16 @@ import {PDFLoader} from "langchain/document_loaders/fs/pdf"
 import{JsonOutputFunctionsParser} from "langchain/output_parsers"
 
 import saveQuizz from "./saveToDb";
+import {auth} from "@/auth";
+
 export async function POST(req: NextRequest){
+    const session = await auth();
+    const userId = session?.user?.id;
+    
+    if (!userId) {
+        return NextResponse.json({ error: "User not authenticated"}, {status: 401});
+    }
+
     const body = await req.formData();
     const document = body.get("pdf");
     try{
@@ -87,7 +96,7 @@ export async function POST(req: NextRequest){
         })
         const result: any = await runnable.invoke([message]);
         console.log("Result:", result);
-        const { quizzId } = await saveQuizz(result);
+        const { quizzId } = await saveQuizz(result, userId);
 
 
         return NextResponse.json({quizzId}, {status: 200});

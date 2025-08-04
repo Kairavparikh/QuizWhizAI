@@ -21,6 +21,7 @@ export const users = pgTable("user", {
   image: text("image"),
   stripeCustomerId: text("stripe_customer_id"),
   subscribed: boolean("subscribed"),
+  freeTrialsUsed: integer("free_trials_used").default(0),
 })
 
 export const userRelations = relations(users, ({many}) => ({
