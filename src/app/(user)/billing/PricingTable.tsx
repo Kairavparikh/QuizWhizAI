@@ -16,7 +16,7 @@ const PricingTable = () => {
     }
 
     try {
-      console.log("Making API call to checkout-session");
+      console.log("Making API call to checkout-session with price:", PRICE_ID);
       const response = await fetch('/api/stripe/checkout-session', {
         method: 'POST',
         headers: {
@@ -28,16 +28,27 @@ const PricingTable = () => {
       });
 
       console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+      
+      const responseText = await response.text();
+      console.log("Raw response:", responseText);
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("API error:", errorText);
-        alert(`API Error: ${response.status} - ${errorText}`);
+        console.error("API error:", responseText);
+        alert(`API Error: ${response.status} - ${responseText}`);
         return;
       }
 
-      const data = await response.json();
-      console.log("Response data:", data);
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("Failed to parse JSON:", parseError);
+        alert("Invalid response from server");
+        return;
+      }
+      
+      console.log("Parsed response data:", data);
       
       if (!data.sessionId) {
         console.error("No sessionId in response");
