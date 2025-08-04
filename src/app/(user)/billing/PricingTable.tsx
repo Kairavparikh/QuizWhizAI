@@ -3,8 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { PRICE_ID } from "@/lib/utils";
-
-const PricingTable = () => {
+interface PricingTableProps {
+  isSubscribed: boolean;
+}
+const PricingTable = ({ isSubscribed }: PricingTableProps) => {
+  
   const handleUpgrade = async () => {
     console.log("Upgrade button clicked");
     
@@ -124,13 +127,15 @@ const PricingTable = () => {
                 Priority Support
               </li>
             </ul>
-            <Button 
-              onClick={handleUpgrade}
-              className="w-full mt-4" 
-              variant="default"
-            >
-              Upgrade to Premium
-            </Button>
+            {isSubscribed ? (
+              <Button disabled className="w-full mt-4">
+                You're already Premium
+              </Button>
+            ) : (
+              <Button onClick={handleUpgrade} className="w-full mt-4">
+                Upgrade to Premium
+              </Button>
+            )}
           </div>
         </div>
       </div>

@@ -27,7 +27,7 @@ const page = async () => {
         </h1>
         <p className="mb-2">You are currently on a {plan} plan</p>
         <ManageSubscription/>
-        <PricingTable />
+<PricingTable isSubscribed={!!user?.subscribed} />
     </div>
     )
 }
