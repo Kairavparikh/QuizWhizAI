@@ -47,7 +47,7 @@ const page = async () => {
     
     {/* Database maintenance section */}
     <div className="mt-4 p-4 border rounded-lg">
-      <h3 className="text-lg font-semibold mb-2">Don't see your Quiz?</h3>
+      <h3 className="text-lg font-semibold mb-2">Don&apos;t see your Quiz?</h3>
       <form action={updateExistingQuizzes}>
         <Button type="submit" variant="outline">
           Update Existing Quizzes

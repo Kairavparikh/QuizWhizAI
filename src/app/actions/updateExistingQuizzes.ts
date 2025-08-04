@@ -10,24 +10,16 @@ export default async function updateExistingQuizzes() {
   const userId = session?.user?.id;
 
   if (!userId) {
-    return { error: "User not authenticated" };
+    return;
   }
 
   try {
     // Update quizzes that don't have a userId
-    const result = await db
+    await db
       .update(quizzes)
       .set({ userId })
-      .where(isNull(quizzes.userId))
-      .returning({ id: quizzes.id });
-
-    return { 
-      success: true, 
-      updatedCount: result.length,
-      updatedQuizzes: result 
-    };
+      .where(isNull(quizzes.userId));
   } catch (error) {
     console.error("Error updating existing quizzes:", error);
-    return { error: "Failed to update existing quizzes" };
   }
 } 
