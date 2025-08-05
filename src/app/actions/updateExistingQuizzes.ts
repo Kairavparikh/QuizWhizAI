@@ -14,7 +14,6 @@ export default async function updateExistingQuizzes() {
   }
 
   try {
-    // Update quizzes that don't have a userId
     await db
       .update(quizzes)
       .set({ userId })
