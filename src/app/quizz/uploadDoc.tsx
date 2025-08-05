@@ -28,7 +28,10 @@ const UploadDoc = () => {
             const data = await res.json();
             const quizzId = data.quizzId;
             
-            await incrementFreeTrials();
+            await fetch("/api/increment-free-trials", {
+        method: "POST",
+      });
+
             
             router.push(`/quizz/${quizzId}`);
          }
