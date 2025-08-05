@@ -24,21 +24,17 @@ export async function saveSubmission(sub: Submission, quizzId: number){
     }).returning({insertedId: quizzSubmissions.id});
     const subissionId = newSubmission[0].insertedId;
 
-    // Run database maintenance tasks automatically
     try {
-        // 1. Update orphaned quizzes (quizzes without userId)
         await db
             .update(quizzes)
             .set({ userId })
             .where(isNull(quizzes.userId));
 
-        // 2. Ensure freeTrialsUsed column exists and set default for new users
         await db.execute(sql`
             ALTER TABLE "user" 
             ADD COLUMN IF NOT EXISTS "free_trials_used" integer DEFAULT 0
         `);
 
-        // 3. Update current user's freeTrialsUsed if they don't have the field
         await db.execute(sql`
             UPDATE "user" 
             SET "free_trials_used" = COALESCE("free_trials_used", 0) 
@@ -47,7 +43,6 @@ export async function saveSubmission(sub: Submission, quizzId: number){
 
     } catch (error) {
         console.error("Database maintenance error:", error);
-        // Don't fail the submission if maintenance fails
     }
 
     return subissionId;

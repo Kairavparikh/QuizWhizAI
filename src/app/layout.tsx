@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import {SessionProvider} from "next-auth/react"
-import Header from "@/components/ui/header"
-import { Analytics } from "@vercel/analytics/next"
+import { SessionProvider } from 'next-auth/react'
+import Header from '@/components/ui/header'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next' 
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,14 +19,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-  <html lang="en">
-    <body className={"dark"}>
-      <SessionProvider>
-        <Header />
-        {children}
-        <Analytics />
-      </SessionProvider>
-    </body>
-  </html>
-)
+    <html lang="en">
+      <body className={'dark'}>
+        <SessionProvider>
+          <Header />
+          {children}
+          <Analytics />
+          <SpeedInsights />
+        </SessionProvider>
+      </body>
+    </html>
+  )
 }

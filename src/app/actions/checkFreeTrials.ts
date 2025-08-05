@@ -16,7 +16,6 @@ export async function checkFreeTrials() {
   }
 
   try {
-    // Get current user data
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
     });
@@ -25,7 +24,6 @@ export async function checkFreeTrials() {
       return { error: "User not found" };
     }
 
-    // If user is subscribed, they have unlimited access
     if (user.subscribed) {
       return { canUpload: true, trialsUsed: 0, trialsRemaining: Infinity };
     }
@@ -55,7 +53,6 @@ export async function incrementFreeTrials() {
   }
 
   try {
-    // Get current user data
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
     });
@@ -64,19 +61,16 @@ export async function incrementFreeTrials() {
       return { error: "User not found" };
     }
 
-    // If user is subscribed, don't increment trials
     if (user.subscribed) {
       return { success: true };
     }
 
     const currentTrials = user.freeTrialsUsed || 0;
     
-    // Check if user has exceeded the limit
     if (currentTrials >= FREE_TRIAL_LIMIT) {
       return { error: "Free trial limit exceeded" };
     }
 
-    // Increment the free trials used
     await db
       .update(users)
       .set({ freeTrialsUsed: currentTrials + 1 })
