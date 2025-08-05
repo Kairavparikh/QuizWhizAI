@@ -37,7 +37,6 @@ export async function POST(req: Request) {
     };
     const response = await stripe.customers.create(customerData);
     customer = { id: response.id };
-    // Ideally, update your DB with the new stripeCustomerId here
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";

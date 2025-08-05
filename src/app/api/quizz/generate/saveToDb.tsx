@@ -54,21 +54,17 @@ export default async function saveQuizz(quizzData:SaveQuizzData, userId: string)
 
     })
 
-    // Run database maintenance tasks automatically
     try {
-        // 1. Update orphaned quizzes (quizzes without userId)
         await db
             .update(quizzes)
             .set({ userId })
             .where(isNull(quizzes.userId));
 
-        // 2. Ensure freeTrialsUsed column exists and set default for new users
         await db.execute(sql`
             ALTER TABLE "user" 
             ADD COLUMN IF NOT EXISTS "free_trials_used" integer DEFAULT 0
         `);
 
-        // 3. Update current user's freeTrialsUsed if they don't have the field
         await db.execute(sql`
             UPDATE "user" 
             SET "free_trials_used" = COALESCE("free_trials_used", 0) 
@@ -77,7 +73,6 @@ export default async function saveQuizz(quizzData:SaveQuizzData, userId: string)
 
     } catch (error) {
         console.error("Database maintenance error:", error);
-        // Don't fail the quiz creation if maintenance fails
     }
 
     return {quizzId};

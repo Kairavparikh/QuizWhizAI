@@ -28,7 +28,6 @@ const UploadDoc = () => {
             const data = await res.json();
             const quizzId = data.quizzId;
             
-            // Increment free trial count on successful quiz generation
             await incrementFreeTrials();
             
             router.push(`/quizz/${quizzId}`);
