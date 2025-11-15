@@ -26,5 +26,15 @@ export function convertDateToString(date: Date) : string{
   return formattedDate;
 
 }
-//export const PRICE_ID: string = "price_1Rr03LDE6ktIMFgV30vmtxCH"; // Test price ID for localhost
-export const PRICE_ID: string = "price_1RsTYaDJtFkaXjyBPwVjXdOV"; // Live price ID for production
+export const PRICE_ID: string = "price_1Rr03LDE6ktIMFgV30vmtxCH"; // Test price ID for localhost
+//export const PRICE_ID: string = "price_1RsTYaDJtFkaXjyBPwVjXdOV"; // Live price ID for production
+
+// Fisher-Yates shuffle algorithm to randomize array order
+export function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
