@@ -10,7 +10,7 @@ import LearningStateFeedback from "./LearningStateFeedback"
 import QuizTimer from "./QuizTimer"
 import { InferSelectModel } from "drizzle-orm";
 import {questionsAnswers, questions as DbQuestions, quizzes} from "@/db/schema";
-import {useRouter} from "next/navigation";
+import {useRouter, useSearchParams} from "next/navigation";
 import { saveSubmission } from "../actions/saveSubmission";
 import { saveAllQuestionResponses } from "../actions/saveQuestionResponse";
 import { shuffleArray } from "@/lib/utils";
@@ -46,6 +46,8 @@ export default function QuizzQuestions(props: Props ){
     const [score, setScore] = useState<number>(0);
     const[userAnswers, setUserAnswers] = useState<{questionId:number, answerId:number, confidence: ConfidenceLevel | null}[]>([]);
     const [submitted, setSubmitted] = useState<boolean>(false);
+    const [submitting, setSubmitting] = useState<boolean>(false);
+    const [submittingMessage, setSubmittingMessage] = useState<string>("");
     const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
     const [timerMinutes, setTimerMinutes] = useState<number>(5); // Default 5 minutes
     const [timeLeftInSeconds, setTimeLeftInSeconds] = useState<number>(5 * 60); // Will be set when quiz starts
@@ -53,6 +55,33 @@ export default function QuizzQuestions(props: Props ){
     const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
     const [quizEndTime, setQuizEndTime] = useState<number | null>(null);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const returnTo = searchParams.get('returnTo');
+
+    const submittingMessages = [
+        "Saving your answers...",
+        "Calculating your score...",
+        "Analyzing your responses...",
+        "Detecting misconceptions...",
+        "Building your study plan...",
+        "Preparing your review...",
+        "Almost done..."
+    ];
+
+    useEffect(() => {
+        if (!submitting) return;
+
+        let messageIndex = 0;
+        setSubmittingMessage(submittingMessages[0]);
+
+        const interval = setInterval(() => {
+            messageIndex = (messageIndex + 1) % submittingMessages.length;
+            setSubmittingMessage(submittingMessages[messageIndex]);
+        }, 1500);
+
+        return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [submitting]);
 
     const handleNext = () => {
         if(!started){
@@ -117,6 +146,7 @@ export default function QuizzQuestions(props: Props ){
             return;
         }
 
+        setSubmitting(true); // Start loading state
         setTimerActive(false); // Stop the timer
         setQuizEndTime(Date.now()); // Track end time
         try{
@@ -138,11 +168,70 @@ export default function QuizzQuestions(props: Props ){
 
         await saveAllQuestionResponses(subId, responsesToSave);
         console.log("Question responses saved with confidence data");
+
+        // Trigger misconception analysis for each response
+        for (const response of responsesToSave) {
+            const question = questionsWithShuffledAnswers.find(q => q.id === response.questionId);
+            if (!question) continue;
+
+            const correctAnswerObj = question.answers.find(a => a.isCorrect);
+            const userAnswerObj = question.answers.find(a => a.id === response.selectedAnswerId);
+
+            // Analyze if wrong OR correct with low confidence (creates/updates misconceptions)
+            if (!response.isCorrect || response.confidence === "low") {
+                try {
+                    await fetch('/api/misconception/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            questionId: response.questionId,
+                            questionText: question.questionText || "",
+                            correctAnswer: correctAnswerObj?.answerText || "",
+                            userAnswer: userAnswerObj?.answerText || "",
+                            allAnswerOptions: question.answers.map(a => a.answerText || ""),
+                            confidence: response.confidence,
+                            isCorrect: response.isCorrect,
+                            folderId: props.quizz.folderId || undefined,
+                        }),
+                    });
+                } catch (error) {
+                    console.error("Error analyzing misconception:", error);
+                    // Don't block quiz submission on misconception analysis failure
+                }
+            }
+
+            // Update misconceptions if answered correctly with high confidence
+            if (response.isCorrect && response.confidence === "high") {
+                try {
+                    await fetch('/api/misconception/update-on-correct', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            questionId: response.questionId,
+                            confidence: response.confidence,
+                        }),
+                    });
+                } catch (error) {
+                    console.error("Error updating misconception on correct answer:", error);
+                    // Don't block quiz submission on misconception update failure
+                }
+            }
+        }
+        console.log("Misconception analysis triggered");
         }
         catch(e){
             console.log("Error saving submission:", e);
         }
-        setSubmitted(true);
+
+        // Stop the loading screen
+        setSubmitting(false);
+
+        // If this is an adaptive quiz with a returnTo parameter, redirect back to the original quiz's results
+        if (returnTo) {
+            router.push(`/quizz/${returnTo}/submission/latest`);
+        } else {
+            setSubmitted(true);
+        }
 
     }
     const handlePressPrev = () => {
@@ -193,6 +282,17 @@ export default function QuizzQuestions(props: Props ){
     // Calculate time spent
     const timeSpentInSeconds = quizStartTime && quizEndTime ? Math.floor((quizEndTime - quizStartTime) / 1000) : 0;
 
+    // Show loading screen while submitting
+    if (submitting) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen space-y-4 py-8">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-900"></div>
+                <p className="text-2xl font-bold animate-pulse text-gray-900 dark:text-gray-100">{submittingMessage}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Please wait while we process your quiz...</p>
+            </div>
+        );
+    }
+
     if(submitted){
         return(
             <QuizzSubmission
@@ -204,29 +304,31 @@ export default function QuizzQuestions(props: Props ){
             timeSpentInSeconds = {timeSpentInSeconds}
             questionsWithShuffledAnswers = {questionsWithShuffledAnswers}
             documentContent = {props.quizz.documentContent || ""}
+            quizzId = {props.quizz.id}
                 />
         )
     }
         return (
           <div className = "flex flex-col flex-1">
-            <div className="sticky top-0 z-10 shadow-md py-4 w-full bg-white dark:bg-gray-900">
-            <header className = "grid grid-cols-[auto,1fr,auto] grid-flow-col items-center justify-between py-2 gap-2">
-                <Button size = "icon" variant = "outline" onClick = {handlePressPrev}><ChevronLeft /></Button>
-                <div className="flex flex-col gap-2">
-                    <ProgressBar value={(currentQuestion / questions.length)*100}/>
-                    {started && timerActive && (
-                        <div className="flex justify-center">
-                            <QuizTimer
-                                timeLeftInSeconds={timeLeftInSeconds}
-                                onTick={handleTimerTick}
-                                onExpire={handleTimerExpire}
-                            />
-                        </div>
-                    )}
-                </div>
-                <Button size = "icon" variant = "outline" onClick = {handleExit}><X /></Button>
-
+            <div className="sticky top-0 z-10 shadow-md py-4 w-full bg-white dark:bg-gray-900 flex justify-center px-6">
+              <div className="w-full max-w-2xl">
+                <header className = "grid grid-cols-[auto,1fr,auto] grid-flow-col items-center justify-between py-2 gap-2">
+                    <Button size = "icon" variant = "outline" onClick = {handlePressPrev}><ChevronLeft /></Button>
+                    <div className="flex flex-col gap-2">
+                        <ProgressBar value={(currentQuestion / questions.length)*100}/>
+                        {started && timerActive && (
+                            <div className="flex justify-center">
+                                <QuizTimer
+                                    timeLeftInSeconds={timeLeftInSeconds}
+                                    onTick={handleTimerTick}
+                                    onExpire={handleTimerExpire}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <Button size = "icon" variant = "outline" onClick = {handleExit}><X /></Button>
                 </header>
+              </div>
             </div>
           <main className="flex justify-center flex-1 items-center px-6">
             {!started ? (
@@ -314,7 +416,7 @@ export default function QuizzQuestions(props: Props ){
                     </div>
                 </div>
             ) : (
-                <div className="w-full max-w-3xl space-y-6">
+                <div className="w-full max-w-2xl space-y-6">
                     <h2 className = "text-3xl font-bold">{questionsWithShuffledAnswers[currentQuestion].questionText}</h2>
 
                     {/* Confidence Selector - Show before answering */}
@@ -362,8 +464,9 @@ export default function QuizzQuestions(props: Props ){
                 </div>
             )}
           </main>
-          <footer className = "footer pb-9 px-6 relative mb-0">
-            <ResultCard isCorrect = {isCorrect} correctAnswer = {questionsWithShuffledAnswers[currentQuestion].answers.find(answer => answer.isCorrect === true)?.answerText || ""}/>
+          <footer className = "footer pb-9 px-6 relative mb-0 flex justify-center">
+            <div className="w-full max-w-2xl space-y-4">
+              <ResultCard isCorrect = {isCorrect} correctAnswer = {questionsWithShuffledAnswers[currentQuestion].answers.find(answer => answer.isCorrect === true)?.answerText || ""}/>
                 {
                     (currentQuestion === questions.length -1) ?
                         <Button
@@ -371,6 +474,7 @@ export default function QuizzQuestions(props: Props ){
                             variant="neo"
                             onClick={handleSubmit}
                             disabled={!hasAnsweredCurrentQuestion}
+                            className="w-full"
                         >
                             Submit
                         </Button> :
@@ -379,11 +483,12 @@ export default function QuizzQuestions(props: Props ){
                             variant="neo"
                             onClick={handleNext}
                             disabled={started && !hasAnsweredCurrentQuestion}
+                            className="w-full"
                         >
                             {!started ? 'Start' : 'Next'}
                         </Button>
                 }
-
+            </div>
           </footer>
           </div>
         )

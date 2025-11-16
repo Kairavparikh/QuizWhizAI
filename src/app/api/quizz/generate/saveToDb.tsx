@@ -16,7 +16,7 @@ interface SaveQuizzData extends Quizz{
 }
 
 
-export default async function saveQuizz(quizzData:SaveQuizzData, userId: string, documentContent?: string) {
+export default async function saveQuizz(quizzData:SaveQuizzData, userId: string, documentContent?: string, folderId?: number | null) {
     const {name, description, questions} = quizzData;
     const newQuizz = await db
     .insert(quizzes)
@@ -24,7 +24,8 @@ export default async function saveQuizz(quizzData:SaveQuizzData, userId: string,
         name,
         description,
         userId,
-        documentContent: documentContent || null
+        documentContent: documentContent || null,
+        folderId: folderId || null
     })
     .returning({
         insertedId: quizzes.id

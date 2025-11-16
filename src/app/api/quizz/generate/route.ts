@@ -19,6 +19,8 @@ export async function POST(req: NextRequest){
 
     const body = await req.formData();
     const document = body.get("pdf");
+    const folderIdStr = body.get("folderId");
+    const folderId = folderIdStr ? parseInt(folderIdStr as string) : null;
     try{
         const pdfLoader = new PDFLoader(document as Blob, {
             parsedItemSeparator: " "
@@ -99,7 +101,7 @@ export async function POST(req: NextRequest){
 
         // Save the document content along with the quiz
         const documentContent = texts.join("\n");
-        const { quizzId } = await saveQuizz(result, userId, documentContent);
+        const { quizzId } = await saveQuizz(result, userId, documentContent, folderId);
 
 
         return NextResponse.json({quizzId}, {status: 200});

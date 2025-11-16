@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, ArrowRight, FileText, Calendar } from "lucide-react";
+import { BookOpen, ArrowRight, FileText, Calendar, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -9,6 +9,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useState } from "react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { AlertDialog } from "@/components/ui/AlertDialog";
 
 export type Quiz = {
   id: number;
@@ -21,14 +24,57 @@ export type Quiz = {
 
 type Props = {
   quiz: Quiz;
+  onDelete?: (quizId: number) => void;
 };
 
-export default function QuizCard({ quiz }: Props) {
+export default function QuizCard({ quiz, onDelete }: Props) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowConfirmDelete(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/quizz/${quiz.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        onDelete?.(quiz.id);
+      } else {
+        setErrorMessage("Failed to delete quiz. Please try again.");
+        setShowErrorAlert(true);
+      }
+    } catch (error) {
+      console.error("Error deleting quiz:", error);
+      setErrorMessage("An error occurred while deleting the quiz.");
+      setShowErrorAlert(true);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   return (
     <TooltipProvider>
       <div className="group relative bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-300 hover:shadow-xl overflow-hidden">
         {/* Gradient accent bar */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+        {/* Delete button */}
+        <button
+          onClick={handleDeleteClick}
+          disabled={isDeleting}
+          className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-200 disabled:opacity-50"
+          aria-label="Delete quiz"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
         <div className="p-6">
           {/* Header */}
@@ -102,6 +148,26 @@ export default function QuizCard({ quiz }: Props) {
       {/* Decorative corner gradient */}
       <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-blue-500/5 to-transparent rounded-tl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
     </div>
+
+    {/* Confirmation Dialog */}
+    <ConfirmDialog
+      isOpen={showConfirmDelete}
+      onClose={() => setShowConfirmDelete(false)}
+      onConfirm={handleConfirmDelete}
+      title="Delete Quiz"
+      message={`Are you sure you want to delete "${quiz.name || 'this quiz'}"? This action cannot be undone.`}
+      confirmText="Delete"
+      cancelText="Cancel"
+      variant="danger"
+    />
+
+    {/* Error Alert Dialog */}
+    <AlertDialog
+      isOpen={showErrorAlert}
+      onClose={() => setShowErrorAlert(false)}
+      message={errorMessage}
+      variant="error"
+    />
     </TooltipProvider>
   );
 }

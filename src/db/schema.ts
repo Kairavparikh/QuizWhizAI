@@ -21,6 +21,21 @@ export const learningState = pgEnum("learning_state", [
   "HIGH_CONFIDENCE_CORRECT"
 ]);
 
+// Enums for misconception system
+export const misconceptionStatus = pgEnum("misconception_status", ["active", "resolving", "resolved"]);
+export const misconceptionPatternType = pgEnum("misconception_pattern_type", [
+  "cause_vs_effect",
+  "variance_vs_bias",
+  "correlation_vs_causation",
+  "inverse_optimization",
+  "keyword_matching",
+  "temporal_confusion",
+  "part_whole_confusion",
+  "scope_confusion",
+  "other"
+]);
+export const questionMisconceptionRelation = pgEnum("question_misconception_relation", ["reveals", "tests", "reinforces"]);
+
 export const users = pgTable("user", {
   id: text("id")
     .primaryKey()
@@ -85,13 +100,31 @@ export const verificationTokens = pgTable(
   })
 )
 
+// Folders/Subjects for organizing quizzes
+export const folders = pgTable("folders", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  userId: text("user_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const foldersRelations = relations(folders, ({ one, many }) => ({
+  user: one(users, {
+    fields: [folders.userId],
+    references: [users.id],
+  }),
+  quizzes: many(quizzes),
+}));
 
 export const quizzes = pgTable("quizzes", {
   id: serial("id").primaryKey(),
   name: text("name"),
   description: text("description"),
   userId: text("user_id").references(() => users.id),
+  folderId: integer("folder_id").references(() => folders.id),
   documentContent: text("document_content"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const questions = pgTable("questions", {
@@ -229,5 +262,104 @@ export const spacedRepetitionRelations = relations(spacedRepetition, ({ one }) =
   question: one(questions, {
     fields: [spacedRepetition.questionId],
     references: [questions.id],
+  }),
+}));
+
+// Misconception tables for Adaptive Misconception Quizzing (AMQ)
+
+// Main misconceptions table - tracks individual misconceptions per user
+export const misconceptions = pgTable("misconceptions", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").references(() => users.id).notNull(),
+  folderId: integer("folder_id").references(() => folders.id),
+  concept: text("concept").notNull(), // e.g., "PCA objective function"
+  misconceptionType: text("misconception_type").notNull(), // e.g., "Confuses high variance with low variance"
+  description: text("description"), // Detailed description of the misconception
+  status: misconceptionStatus("status").notNull().default("active"),
+  strength: integer("strength").notNull().default(5), // 1-10, how strong this misconception is
+  occurrenceCount: integer("occurrence_count").notNull().default(1), // How many times detected
+  correctStreakCount: integer("correct_streak_count").notNull().default(0), // Correct answers in a row
+  detectedAt: timestamp("detected_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+  lastTestedAt: timestamp("last_tested_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const misconceptionsRelations = relations(misconceptions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [misconceptions.userId],
+    references: [users.id],
+  }),
+  folder: one(folders, {
+    fields: [misconceptions.folderId],
+    references: [folders.id],
+  }),
+  questionMisconceptions: many(questionMisconceptions),
+  misconceptionRelationships1: many(misconceptionRelationships, {
+    relationName: "misconception1",
+  }),
+  misconceptionRelationships2: many(misconceptionRelationships, {
+    relationName: "misconception2",
+  }),
+}));
+
+// Meta-patterns across topics (e.g., always confuses cause vs effect)
+export const misconceptionPatterns = pgTable("misconception_patterns", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").references(() => users.id).notNull(),
+  patternType: misconceptionPatternType("pattern_type").notNull(),
+  description: text("description").notNull(),
+  occurrenceCount: integer("occurrence_count").notNull().default(1),
+  lastDetected: timestamp("last_detected").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const misconceptionPatternsRelations = relations(misconceptionPatterns, ({ one }) => ({
+  user: one(users, {
+    fields: [misconceptionPatterns.userId],
+    references: [users.id],
+  }),
+}));
+
+// Links questions to the misconceptions they reveal/test
+export const questionMisconceptions = pgTable("question_misconceptions", {
+  id: serial("id").primaryKey(),
+  questionId: integer("question_id").references(() => questions.id).notNull(),
+  misconceptionId: integer("misconception_id").references(() => misconceptions.id).notNull(),
+  relationshipType: questionMisconceptionRelation("relationship_type").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const questionMisconceptionsRelations = relations(questionMisconceptions, ({ one }) => ({
+  question: one(questions, {
+    fields: [questionMisconceptions.questionId],
+    references: [questions.id],
+  }),
+  misconception: one(misconceptions, {
+    fields: [questionMisconceptions.misconceptionId],
+    references: [misconceptions.id],
+  }),
+}));
+
+// Relationships between misconceptions (for graph visualization)
+export const misconceptionRelationships = pgTable("misconception_relationships", {
+  id: serial("id").primaryKey(),
+  misconceptionId1: integer("misconception_id_1").references(() => misconceptions.id).notNull(),
+  misconceptionId2: integer("misconception_id_2").references(() => misconceptions.id).notNull(),
+  relationshipType: text("relationship_type").notNull(), // "related_concept", "prerequisite", "opposite"
+  strength: integer("strength").notNull().default(5), // 1-10
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const misconceptionRelationshipsRelations = relations(misconceptionRelationships, ({ one }) => ({
+  misconception1: one(misconceptions, {
+    relationName: "misconception1",
+    fields: [misconceptionRelationships.misconceptionId1],
+    references: [misconceptions.id],
+  }),
+  misconception2: one(misconceptions, {
+    relationName: "misconception2",
+    fields: [misconceptionRelationships.misconceptionId2],
+    references: [misconceptions.id],
   }),
 }));

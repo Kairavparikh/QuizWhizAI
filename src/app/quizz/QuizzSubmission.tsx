@@ -29,10 +29,11 @@ type Props = {
     allAnswers?: AllAnswer[],
     timeSpentInSeconds?: number,
     questionsWithShuffledAnswers?: any[],
-    documentContent?: string | null
+    documentContent?: string | null,
+    quizzId?: number
 }
 const QuizzSubmission = (props: Props) => {
-    const {scorePercentage, score, totalQuestions, wrongAnswers = [], allAnswers = [], timeSpentInSeconds = 0, questionsWithShuffledAnswers = [], documentContent = ""} = props;
+    const {scorePercentage, score, totalQuestions, wrongAnswers = [], allAnswers = [], timeSpentInSeconds = 0, questionsWithShuffledAnswers = [], documentContent = "", quizzId} = props;
     const { reward } = useReward('rewardId', 'confetti');
     const router = useRouter();
     const [isGeneratingPractice, setIsGeneratingPractice] = useState(false);
@@ -153,6 +154,7 @@ const QuizzSubmission = (props: Props) => {
                     timeSpentInSeconds={timeSpentInSeconds}
                     onHandleBack={onHandleBack}
                     formatTime={formatTime}
+                    quizzId={quizzId}
                 />
             )}
         </div>

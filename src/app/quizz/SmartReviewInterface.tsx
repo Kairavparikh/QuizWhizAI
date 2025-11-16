@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, ChevronRight, ArrowLeft, ArrowRight, X, Clock } from "lucide-react";
+import { MessageSquare, ChevronRight, ArrowLeft, ArrowRight, X, Clock, Sparkles, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Bar from "@/components/ui/bar";
 import ReviewChatbot from "./ReviewChatbot";
 import LearningStateFeedback from "./LearningStateFeedback";
 import StudyPlan from "./StudyPlan";
 import { type ConfidenceLevel } from "@/lib/confidenceMapping";
+import { useRouter } from "next/navigation";
 
 type WrongAnswer = {
     questionText: string;
@@ -38,6 +39,7 @@ interface SmartReviewInterfaceProps {
     timeSpentInSeconds: number;
     onHandleBack: () => void;
     formatTime: (seconds: number) => string;
+    quizzId?: number;
 }
 
 export default function SmartReviewInterface({
@@ -50,10 +52,13 @@ export default function SmartReviewInterface({
     totalQuestions,
     timeSpentInSeconds,
     onHandleBack,
-    formatTime
+    formatTime,
+    quizzId
 }: SmartReviewInterfaceProps) {
+    const router = useRouter();
     const [selectedQuestionIndex, setSelectedQuestionIndex] = useState<number | null>(null);
     const [selectedStudyCategory, setSelectedStudyCategory] = useState<string | null>(null);
+    const [generatingAdaptiveQuiz, setGeneratingAdaptiveQuiz] = useState(false);
     const detailPanelRef = useRef<HTMLDivElement>(null);
 
     // Generate personalized summary based on quiz performance
@@ -140,6 +145,56 @@ export default function SmartReviewInterface({
         }
     };
 
+    const handleGenerateAdaptiveQuiz = async () => {
+        setGeneratingAdaptiveQuiz(true);
+        try {
+            // First, fetch the user's misconceptions from this quiz session
+            const response = await fetch("/api/misconception/profile");
+            if (!response.ok) {
+                throw new Error("Failed to fetch misconception profile");
+            }
+
+            const profile = await response.json();
+
+            // Get active misconceptions (exclude resolved ones)
+            const activeMisconceptions = profile.grouped.active || [];
+
+            if (activeMisconceptions.length === 0) {
+                alert("No active misconceptions found. Complete more questions to build your profile!");
+                return;
+            }
+
+            // Generate quiz targeting top 5 misconceptions or all if less than 5
+            const topMisconceptions = activeMisconceptions
+                .sort((a: any, b: any) => b.strength - a.strength)
+                .slice(0, 5)
+                .map((m: any) => m.id);
+
+            const quizResponse = await fetch("/api/misconception/generate-adaptive-quiz", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    misconceptionIds: topMisconceptions,
+                    questionCount: Math.min(topMisconceptions.length * 3, 15),
+                }),
+            });
+
+            if (!quizResponse.ok) {
+                throw new Error("Failed to generate adaptive quiz");
+            }
+
+            const data = await quizResponse.json();
+            // Add returnTo parameter to navigate back after completing adaptive quiz
+            const returnUrl = quizzId ? `/quizz/${data.quizzId}?returnTo=${quizzId}` : `/quizz/${data.quizzId}`;
+            router.push(returnUrl);
+        } catch (error) {
+            console.error("Error generating adaptive quiz:", error);
+            alert("Error generating adaptive quiz. Please try again.");
+        } finally {
+            setGeneratingAdaptiveQuiz(false);
+        }
+    };
+
     return (
         <div className="flex flex-col flex-1">
             {/* Header - At the very top with X button */}
@@ -170,11 +225,60 @@ export default function SmartReviewInterface({
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                         {/* LEFT: Study Plan (3/12 width on xl screens) */}
                         <div className="xl:col-span-3 order-1">
-                            <div className="sticky top-4">
+                            <div className="sticky top-4 space-y-4">
                                 <StudyPlan
                                     allAnswers={allAnswers}
                                     onTopicClick={handleStudyTopicClick}
                                 />
+
+                                {/* Adaptive Quiz Generation Card */}
+                                <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-6 border-2 border-purple-200 dark:border-purple-700 shadow-lg">
+                                    <div className="flex items-start gap-3 mb-4">
+                                        <Brain className="w-8 h-8 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-1" />
+                                        <div>
+                                            <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-1">
+                                                Adaptive Practice
+                                            </h3>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                Generate a personalized quiz targeting your detected misconceptions
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        onClick={handleGenerateAdaptiveQuiz}
+                                        disabled={generatingAdaptiveQuiz}
+                                        size="lg"
+                                        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                                    >
+                                        {generatingAdaptiveQuiz ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                Generating Quiz...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles className="w-5 h-5 mr-2" />
+                                                Generate Adaptive Quiz
+                                            </>
+                                        )}
+                                    </Button>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">
+                                        Powered by AI misconception analysis
+                                    </p>
+                                </div>
+
+                                {/* View Full Misconception Profile Link */}
+                                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                    <a
+                                        href={`/dashboard/misconceptions${quizzId ? `?returnTo=${quizzId}` : ''}`}
+                                        className="flex items-center justify-between text-sm hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                    >
+                                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                                            View Full Misconception Profile
+                                        </span>
+                                        <ChevronRight className="w-4 h-4" />
+                                    </a>
+                                </div>
                             </div>
                         </div>
 

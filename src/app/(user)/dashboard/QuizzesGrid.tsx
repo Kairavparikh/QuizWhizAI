@@ -1,13 +1,21 @@
+"use client";
+
 import QuizCard, { type Quiz } from "./QuizCard";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 type Props = {
   quizzes: Quiz[];
 };
 
-export default function QuizzesGrid({ quizzes }: Props) {
+export default function QuizzesGrid({ quizzes: initialQuizzes }: Props) {
+  const [quizzes, setQuizzes] = useState(initialQuizzes);
+
+  const handleDeleteQuiz = (quizId: number) => {
+    setQuizzes(prevQuizzes => prevQuizzes.filter(quiz => quiz.id !== quizId));
+  };
   if (quizzes.length === 0) {
     return (
       <div className="rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 p-12 text-center bg-gray-50 dark:bg-gray-900/50">
@@ -53,7 +61,7 @@ export default function QuizzesGrid({ quizzes }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {quizzes.map((quiz) => (
-          <QuizCard key={quiz.id} quiz={quiz} />
+          <QuizCard key={quiz.id} quiz={quiz} onDelete={handleDeleteQuiz} />
         ))}
       </div>
     </div>
