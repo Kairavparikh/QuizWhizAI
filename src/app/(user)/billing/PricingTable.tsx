@@ -3,12 +3,19 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { PRICE_ID } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
 interface PricingTableProps {
   isSubscribed: boolean;
 }
+
 const PricingTable = ({ isSubscribed }: PricingTableProps) => {
-  
-  const handleUpgrade = async () => {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const userRole = (session?.user as any)?.role;
+
+  const handleUpgradeStudent = async () => {
     console.log("Upgrade button clicked");
     
     // Check if Stripe key is available
@@ -82,60 +89,224 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
     }
   };
 
+  const handleUpgradeTeacher = async () => {
+    try {
+      const response = await fetch("/api/stripe/create-teacher-checkout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        const { url } = await response.json();
+        window.location.href = url;
+      } else {
+        console.error("Failed to create checkout session");
+        alert("Failed to create checkout session");
+      }
+    } catch (error) {
+      console.error("Error creating checkout:", error);
+      alert("Error creating checkout");
+    }
+  };
+
+  const currentPlanName = isSubscribed
+    ? (userRole === "TEACHER" ? "Education" : "Premium Student")
+    : "Free";
+
   return (
-    <div className="mt-8">
-      <h2 className="text-2xl font-bold mb-4 text-center">Choose Your Plan</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+    <div className="w-full px-8 md:px-16 lg:px-24 xl:px-32">
+      <div className="text-center mb-20">
+        <h1 className="text-6xl md:text-7xl font-bold mb-8 text-gray-900 dark:text-gray-100">
+          Choose Your Plan
+        </h1>
+        <p className="text-2xl text-gray-600 dark:text-gray-400 mb-4">
+          Select the perfect plan for your needs
+        </p>
+        <div className="inline-flex items-center gap-2 bg-white dark:bg-gray-800 px-6 py-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+          <span className="text-lg text-gray-600 dark:text-gray-400">Current Plan:</span>
+          <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{currentPlanName}</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 xl:gap-12 w-full max-w-[1400px] mx-auto">
         {/* Free Plan */}
-        <div className="border border-gray-700 rounded-lg p-6 bg-gray-800">
-          <div className="text-center">
-            <h3 className="text-xl font-semibold mb-2">Free Plan</h3>
-            <div className="text-3xl font-bold mb-4">$0</div>
-            <ul className="space-y-3 text-left">
-              <li className="flex items-center">
-                <Check className="w-5 h-5 text-green-500 mr-2" />
-                3 Free Quizzes
-              </li>
-              <li className="flex items-center">
-                <Check className="w-5 h-5 text-green-500 mr-2" />
-                Basic Quiz Generation
-              </li>
-              <li className="flex items-center">
-                <Check className="w-5 h-5 text-green-500 mr-2" />
-                Standard Support
-              </li>
-            </ul>
+        <div className="relative group">
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-10 transition-all duration-300 hover:shadow-2xl">
+            {!isSubscribed && (
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
+                ✓ Current Plan
+              </div>
+            )}
+
+            <div className="text-center mb-8">
+              <h3 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">Free</h3>
+              <p className="text-base text-gray-500 dark:text-gray-400">Perfect for getting started</p>
+            </div>
+
+            <div className="text-center mb-8 py-6">
+              <div className="flex items-baseline justify-center">
+                <span className="text-6xl font-extrabold text-gray-900 dark:text-gray-100">$0</span>
+                <span className="text-xl text-gray-600 dark:text-gray-400 ml-2">/month</span>
+              </div>
+            </div>
+
+            <Button
+              disabled
+              className="w-full mb-8 bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-600 dark:text-gray-400 text-lg py-6 rounded-xl hover:bg-gray-200 font-semibold"
+            >
+              Current Plan
+            </Button>
+
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
+              <ul className="space-y-4">
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">3 quiz uploads</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">Basic quiz generation</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">Join classes as student</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">Standard support</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        {/* Premium Plan */}
-        <div className="border border-blue-600 rounded-lg p-6 bg-gray-800">
-          <div className="text-center">
-            <h3 className="text-xl font-semibold mb-2">Premium Plan</h3>
-            <div className="text-3xl font-bold mb-4">$19.99<span className="text-sm font-normal">/month</span></div>
-            <ul className="space-y-3 text-left">
-              <li className="flex items-center">
-                <Check className="w-5 h-5 text-green-500 mr-2" />
-                Unlimited Quizzes
-              </li>
-              <li className="flex items-center">
-                <Check className="w-5 h-5 text-green-500 mr-2" />
-                Advanced Quiz Generation
-              </li>
-              <li className="flex items-center">
-                <Check className="w-5 h-5 text-green-500 mr-2" />
-                Priority Support
-              </li>
-            </ul>
-            {isSubscribed ? (
-              <Button disabled className="w-full mt-4">
-                You&#39;re already Premium
-              </Button>
+        {/* Premium Plan - Student */}
+        <div className="relative group">
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-xl border-2 border-blue-600 dark:border-blue-500 p-10 transition-all duration-300 hover:shadow-2xl">
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-8 py-2 rounded-full text-sm font-bold shadow-lg">
+              Most Popular
+            </div>
+
+            {isSubscribed && userRole === "STUDENT" && (
+              <div className="absolute -top-4 right-6 bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
+                ✓ Current Plan
+              </div>
+            )}
+
+            <div className="text-center mb-8">
+              <h3 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">Premium Student</h3>
+              <p className="text-base text-gray-500 dark:text-gray-400">Best for students</p>
+            </div>
+
+            <div className="text-center mb-8 py-6">
+              <div className="flex items-baseline justify-center">
+                <span className="text-6xl font-extrabold text-gray-900 dark:text-gray-100">$19.99</span>
+                <span className="text-xl text-gray-600 dark:text-gray-400 ml-2">/month</span>
+              </div>
+            </div>
+
+            {userRole === "STUDENT" ? (
+              isSubscribed ? (
+                <Button disabled className="w-full mb-8 bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-600 dark:text-gray-400 text-lg py-6 rounded-xl hover:bg-gray-200 font-semibold">
+                  Current Plan
+                </Button>
+              ) : (
+                <Button onClick={handleUpgradeStudent} className="w-full mb-8 bg-blue-600 hover:bg-blue-700 text-white text-lg py-6 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
+                  Switch to Premium
+                </Button>
+              )
             ) : (
-              <Button onClick={handleUpgrade} className="w-full mt-4">
-                Upgrade to Premium
+              <Button disabled className="w-full mb-8 bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-600 dark:text-gray-400 text-lg py-6 rounded-xl hover:bg-gray-200 font-semibold">
+                For Students Only
               </Button>
             )}
+
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
+              <ul className="space-y-4">
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base"><strong>Unlimited quizzes</strong></span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">Advanced AI quiz generation</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">Misconception tracking</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">Spaced repetition learning</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">Priority support</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Education Plan - Teacher */}
+        <div className="relative group">
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-10 transition-all duration-300 hover:shadow-2xl">
+            {isSubscribed && userRole === "TEACHER" && (
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
+                ✓ Current Plan
+              </div>
+            )}
+
+            <div className="text-center mb-8">
+              <h3 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">Education</h3>
+              <p className="text-base text-gray-500 dark:text-gray-400">Special pricing for educators</p>
+            </div>
+
+            <div className="text-center mb-8 py-6">
+              <div className="flex items-baseline justify-center">
+                <span className="text-6xl font-extrabold text-gray-900 dark:text-gray-100">$19.99</span>
+                <span className="text-xl text-gray-600 dark:text-gray-400 ml-2">/month</span>
+              </div>
+            </div>
+
+            {userRole === "TEACHER" ? (
+              isSubscribed ? (
+                <Button disabled className="w-full mb-8 bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-600 dark:text-gray-400 text-lg py-6 rounded-xl hover:bg-gray-200 font-semibold">
+                  Current Plan
+                </Button>
+              ) : (
+                <Button onClick={handleUpgradeTeacher} className="w-full mb-8 bg-blue-600 hover:bg-blue-700 text-white text-lg py-6 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
+                  Switch to Education
+                </Button>
+              )
+            ) : (
+              <Button disabled className="w-full mb-8 bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-600 dark:text-gray-400 text-lg py-6 rounded-xl hover:bg-gray-200 font-semibold">
+                For Teachers Only
+              </Button>
+            )}
+
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
+              <ul className="space-y-4">
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base"><strong>All Premium features</strong></span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">Create unlimited classes</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">Assign quizzes to students</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">Class-wide analytics</span>
+                </li>
+                <li className="flex items-start gap-4">
+                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+                  <span className="text-gray-700 dark:text-gray-300 text-base">Track student progress</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

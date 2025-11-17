@@ -14,33 +14,67 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-import { BarChartBig, Plus } from "lucide-react"
-export function NavMenu() {
+import { BarChartBig, Plus, RefreshCw, GraduationCap, BookOpen } from "lucide-react"
+import { auth } from "@/auth"
+
+export async function NavMenu() {
+  const session = await auth();
+  const userRole = (session?.user as any)?.role;
+
   return (
       <DropdownMenuContent className="w-56" align="start">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          {userRole === "STUDENT" && (
+            <>
+              <DropdownMenuItem>
+                <Link href="/dashboard" className="flex w-full items-center">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/student/classes" className="flex w-full items-center">
+                  <GraduationCap className="mr-2 h-4 w-4" />
+                  My Classes
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/quizz/new" className="flex w-full items-center">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Quiz
+                </Link>
+              </DropdownMenuItem>
+            </>
+          )}
+
+          {userRole === "TEACHER" && (
+            <>
+              <DropdownMenuItem>
+                <Link href="/teacher/dashboard" className="flex w-full items-center">
+                  <GraduationCap className="mr-2 h-4 w-4" />
+                  Teacher Dashboard
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/quizz/new/upload" className="flex w-full items-center">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Quiz
+                </Link>
+              </DropdownMenuItem>
+            </>
+          )}
+
           <DropdownMenuItem>
-            <Link href = "/dashboard" className = "flex">
-              DashBoard
+            <Link href="/billing" className="flex w-full items-center">
+              <BarChartBig className="mr-2 h-4 w-4" />
+              Billing
             </Link>
           </DropdownMenuItem>
-          
-          <DropdownMenuItem>
-          <Link href = "/quizz/new" className = "flex" >
-          
-            Add Quiz
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-          <Link href = "/billing" className = "flex" >
-            Billing
-            </Link>
-          </DropdownMenuItem>
-         
+
         </DropdownMenuGroup>
-      
+
       </DropdownMenuContent>
   )
 }

@@ -30,7 +30,28 @@ export async function POST(req: NextRequest){
         const selectedDocuments = docs.filter((doc) => doc.pageContent !== undefined);
         const texts = selectedDocuments.map((doc) => doc.pageContent);
 
-        const prompt = "given the text which is a summary of the document, generate a quiz based on the text with at least 8 questions. Return json only that contains a quiz object with fields: name, description and questions. CRITICAL: Randomize the position of the correct answer - do NOT always place it first. Mix up the positions so correct answers appear as the 1st, 2nd, 3rd, or 4th option across different questions. There must be exactly four answer options for each question. questions is an array of objects with fields: questionText, answers. The answers array contains objects with fields: answerText, isCorrect. Only one answer per question should have isCorrect: true."
+        const prompt = `Analyze the provided document text carefully. Your task is to create a quiz following these rules:
+
+STEP 1 - CHECK FOR EXISTING QUIZ QUESTIONS:
+- First, check if the document already contains quiz questions with multiple choice answers
+- Look for patterns like: numbered questions, lettered answer choices (A, B, C, D), questions followed by options
+- If quiz questions are found, extract them EXACTLY word-for-word, preserving all questions regardless of quantity
+
+STEP 2 - EXTRACTION (if quiz found) OR GENERATION (if no quiz found):
+- If quiz questions exist: Extract ALL questions word-for-word. Do NOT limit the number of questions. Include every single question found.
+- If no quiz questions exist: Generate at least 8 high-quality questions based on the content
+
+FORMATTING REQUIREMENTS:
+- Return JSON only with fields: name, description, and questions
+- name: Create an appropriate title for the quiz
+- description: Brief description of quiz topic
+- questions: Array of question objects with fields: questionText, answers
+- Each answer object has: answerText, isCorrect
+- Exactly four answer options per question
+- Only one answer per question has isCorrect: true
+- CRITICAL: Randomize correct answer positions (1st, 2nd, 3rd, or 4th) - do NOT always place correct answer first
+
+Remember: If the document contains quiz questions, extract ALL of them word-for-word without any limit on quantity.`
 
         if(!process.env.OPENAI_API_KEY){
             return NextResponse.json({ error: "OpenAPIKey not provided"}, {status: 500});

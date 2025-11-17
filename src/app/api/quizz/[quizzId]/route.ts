@@ -14,6 +14,49 @@ import {
 } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 
+// GET - Fetch quiz details
+export async function GET(
+    request: NextRequest,
+    { params }: { params: { quizzId: string } }
+) {
+    try {
+        const session = await auth();
+        const userId = session?.user?.id;
+
+        if (!userId) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const quizzId = parseInt(params.quizzId);
+
+        // Fetch quiz with questions and answers
+        const quiz = await db.query.quizzes.findFirst({
+            where: eq(quizzes.id, quizzId),
+            with: {
+                questions: {
+                    with: {
+                        answers: true,
+                    },
+                },
+            },
+        });
+
+        if (!quiz) {
+            return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+        }
+
+        // Check if user has access to this quiz
+        if (quiz.userId !== userId) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+        }
+
+        return NextResponse.json(quiz);
+    } catch (error: any) {
+        console.error("Error fetching quiz:", error);
+        return NextResponse.json({ error: error.message || "Failed to fetch quiz" }, { status: 500 });
+    }
+}
+
 export async function DELETE(
     request: NextRequest,
     { params }: { params: { quizzId: string } }

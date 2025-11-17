@@ -5,18 +5,25 @@ import { useRouter } from "next/navigation";
 
 interface GetStartedButtonProps {
   isAuthenticated: boolean;
+  userRole: string | null;
 }
 
-export default function GetStartedButton({ isAuthenticated }: GetStartedButtonProps) {
+export default function GetStartedButton({ isAuthenticated, userRole }: GetStartedButtonProps) {
   const router = useRouter();
 
   const handleGetStarted = () => {
-    if (isAuthenticated) {
-      // User is logged in, go to create quiz page
-      router.push("/quizz/new");
-    } else {
+    if (!isAuthenticated) {
       // User is not logged in, redirect to sign in with Google
       router.push("/api/auth/signin");
+    } else if (!userRole) {
+      // User is logged in but hasn't selected a role
+      router.push("/role-selection");
+    } else if (userRole === "TEACHER") {
+      // Teacher goes to teacher dashboard
+      router.push("/teacher/dashboard");
+    } else {
+      // Student goes to student dashboard
+      router.push("/dashboard");
     }
   };
 

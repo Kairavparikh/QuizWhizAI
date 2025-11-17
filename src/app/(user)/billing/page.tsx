@@ -21,13 +21,14 @@ const page = async () => {
     const plan = user?.subscribed ? 'premium' : 'free';
 
     return (
-    <div className="p-4 border rounded-md">
-        <h1 className="text-4xl mb-3">
-            Subscription Details
-        </h1>
-        <p className="mb-2">You are currently on a {plan} plan</p>
-        <ManageSubscription/>
-<PricingTable isSubscribed={!!user?.subscribed} />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 py-16">
+        <PricingTable isSubscribed={!!user?.subscribed} />
+
+        {user?.subscribed && (
+            <div className="flex justify-center mt-16">
+                <ManageSubscription/>
+            </div>
+        )}
     </div>
     )
 }

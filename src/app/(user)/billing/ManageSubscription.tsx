@@ -51,14 +51,18 @@ const ManageSubscription = () => {
       };
       
     return (
-        <Button disabled={loading} onClick={redirectToCustomerPortal}>
+        <Button
+          disabled={loading}
+          onClick={redirectToCustomerPortal}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-7 text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+        >
   {loading ? (
     <>
-      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      <Loader2 className="mr-3 h-6 w-6 animate-spin" />
       Please Wait
     </>
   ) : (
-    "Change Your Subscription"
+    "Manage Your Subscription"
   )}
 </Button>
     )

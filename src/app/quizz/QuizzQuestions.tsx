@@ -149,9 +149,10 @@ export default function QuizzQuestions(props: Props ){
         setSubmitting(true); // Start loading state
         setTimerActive(false); // Stop the timer
         setQuizEndTime(Date.now()); // Track end time
+        const scorePercentage = Math.round((score / questions.length) * 100);
         try{
-        const subId = await saveSubmission({score}, props.quizz.id);
-        console.log("Submission saved with ID:", subId);
+        const subId = await saveSubmission({score: scorePercentage}, props.quizz.id);
+        console.log("Submission saved with ID:", subId, "Score:", scorePercentage + "%");
 
         // Save all question responses with confidence data
         const responsesToSave = userAnswers.map((userAnswer) => {

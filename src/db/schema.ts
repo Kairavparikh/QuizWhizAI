@@ -21,6 +21,9 @@ export const learningState = pgEnum("learning_state", [
   "HIGH_CONFIDENCE_CORRECT"
 ]);
 
+// User role enum
+export const userRole = pgEnum("user_role", ["STUDENT", "TEACHER"]);
+
 // Enums for misconception system
 export const misconceptionStatus = pgEnum("misconception_status", ["active", "resolving", "resolved"]);
 export const misconceptionPatternType = pgEnum("misconception_pattern_type", [
@@ -47,10 +50,13 @@ export const users = pgTable("user", {
   stripeCustomerId: text("stripe_customer_id"),
   subscribed: boolean("subscribed"),
   freeTrialsUsed: integer("free_trials_used").default(0),
+  role: userRole("role").default("STUDENT"),
 })
 
 export const userRelations = relations(users, ({many}) => ({
-  quizzes: many(quizzes)
+  quizzes: many(quizzes),
+  teacherClasses: many(classes, { relationName: "teacherClasses" }),
+  studentClassMembers: many(classMembers),
 }))
  
 export const accounts = pgTable(
@@ -361,5 +367,70 @@ export const misconceptionRelationshipsRelations = relations(misconceptionRelati
     relationName: "misconception2",
     fields: [misconceptionRelationships.misconceptionId2],
     references: [misconceptions.id],
+  }),
+}));
+
+// Teacher/Class Management System
+
+// Classes created by teachers
+export const classes = pgTable("classes", {
+  id: serial("id").primaryKey(),
+  teacherId: text("teacher_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  subject: text("subject"),
+  semester: text("semester"),
+  description: text("description"),
+  joinCode: text("join_code").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const classesRelations = relations(classes, ({ one, many }) => ({
+  teacher: one(users, {
+    relationName: "teacherClasses",
+    fields: [classes.teacherId],
+    references: [users.id],
+  }),
+  members: many(classMembers),
+  assignments: many(quizAssignments),
+}));
+
+// Students enrolled in classes
+export const classMembers = pgTable("class_members", {
+  id: serial("id").primaryKey(),
+  classId: integer("class_id").references(() => classes.id).notNull(),
+  studentId: text("student_id").references(() => users.id).notNull(),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+});
+
+export const classMembersRelations = relations(classMembers, ({ one }) => ({
+  class: one(classes, {
+    fields: [classMembers.classId],
+    references: [classes.id],
+  }),
+  student: one(users, {
+    fields: [classMembers.studentId],
+    references: [users.id],
+  }),
+}));
+
+// Quiz assignments for classes
+export const quizAssignments = pgTable("quiz_assignments", {
+  id: serial("id").primaryKey(),
+  classId: integer("class_id").references(() => classes.id).notNull(),
+  quizId: integer("quiz_id").references(() => quizzes.id).notNull(),
+  dueDate: timestamp("due_date"),
+  status: text("status").default("active"), // "active", "completed", "archived"
+  requireConfidence: boolean("require_confidence").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const quizAssignmentsRelations = relations(quizAssignments, ({ one }) => ({
+  class: one(classes, {
+    fields: [quizAssignments.classId],
+    references: [classes.id],
+  }),
+  quiz: one(quizzes, {
+    fields: [quizAssignments.quizId],
+    references: [quizzes.id],
   }),
 }));

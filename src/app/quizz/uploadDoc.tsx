@@ -4,13 +4,20 @@ import {Button} from "@/components/ui/button"
 import {useRouter} from "next/navigation";
 import { incrementFreeTrials } from "@/app/actions/checkFreeTrials";
 import FolderManager from "@/components/FolderManager";
+import { useSession } from "next-auth/react";
 
 const UploadDoc = () => {
+    const { data: session } = useSession();
+    const userRole = (session?.user as any)?.role;
+    const isTeacher = userRole === "TEACHER";
+
     const[document, setDocument] = useState<File | null | undefined>(null);
     const[isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>("");
     const [loadingMessage, setLoadingMessage] = useState<string>("");
     const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [createdQuizId, setCreatedQuizId] = useState<number | null>(null);
     const router = useRouter();
 
     const loadingMessages = [
@@ -64,7 +71,14 @@ const UploadDoc = () => {
 
             await incrementFreeTrials();
 
-            router.push(`/quizz/${quizzId}`);
+            if (isTeacher) {
+                // Show success modal for teachers
+                setCreatedQuizId(quizzId);
+                setShowSuccessModal(true);
+            } else {
+                // Students go directly to quiz
+                router.push(`/quizz/${quizzId}`);
+            }
          } else {
             // Handle non-200 responses
             const errorData = await res.json().catch(() => ({ error: "Unknown error occurred" }));
@@ -88,34 +102,39 @@ const UploadDoc = () => {
                 </div>
             ) : (
                 <div className="w-full space-y-6">
-                    {/* Step 1: Folder Selection (Required) */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-blue-500 dark:border-blue-600 p-6 shadow-lg">
-                        <div className="mb-4">
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                                Step 1: Select or Create a Folder
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Organize your quizzes by subject or topic. Create a new folder or select an existing one.
-                            </p>
+                    {/* Step 1: Folder Selection (Required for Students only) */}
+                    {!isTeacher && (
+                        <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-blue-500 dark:border-blue-600 p-6 shadow-lg">
+                            <div className="mb-4">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                                    Step 1: Select or Create a Folder
+                                </h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Organize your quizzes by subject or topic. Create a new folder or select an existing one.
+                                </p>
+                            </div>
+                            <FolderManager
+                                onFolderSelect={setSelectedFolderId}
+                                selectedFolderId={selectedFolderId}
+                                showManagement={true}
+                                requireSelection={true}
+                            />
                         </div>
-                        <FolderManager
-                            onFolderSelect={setSelectedFolderId}
-                            selectedFolderId={selectedFolderId}
-                            showManagement={true}
-                            requireSelection={true}
-                        />
-                    </div>
+                    )}
 
-                    {/* Step 2: Document Upload (Only shown when folder is selected) */}
-                    {selectedFolderId ? (
+                    {/* Step 2: Document Upload (Only shown when folder is selected for students, or always for teachers) */}
+                    {(isTeacher || selectedFolderId) ? (
                         <form className="w-full space-y-6" onSubmit={handleSubmit}>
                             <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-green-500 dark:border-green-600 p-6 shadow-lg">
                                 <div className="mb-4">
                                     <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                                        Step 2: Upload Your Document
+                                        {isTeacher ? "Upload Your Quiz Document" : "Step 2: Upload Your Document"}
                                     </h3>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        Upload a PDF document to generate quiz questions.
+                                        {isTeacher
+                                            ? "Upload a PDF with quiz questions or course material to generate a quiz."
+                                            : "Upload a PDF document to generate quiz questions."
+                                        }
                                     </p>
                                 </div>
 
@@ -172,6 +191,42 @@ const UploadDoc = () => {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Success Modal for Teachers */}
+            {showSuccessModal && isTeacher && createdQuizId && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-8 animate-in fade-in duration-300">
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                                Quiz Created Successfully!
+                            </h2>
+                            <p className="text-gray-600 dark:text-gray-400 mb-6">
+                                Your quiz has been generated and is ready to assign to your classes.
+                            </p>
+                            <div className="flex flex-col gap-3">
+                                <Button
+                                    onClick={() => router.push(`/quizz/${createdQuizId}/preview`)}
+                                    className="w-full bg-blue-600 hover:bg-blue-700"
+                                >
+                                    Preview Quiz
+                                </Button>
+                                <Button
+                                    onClick={() => router.push("/teacher/dashboard")}
+                                    variant="outline"
+                                    className="w-full"
+                                >
+                                    Back to Dashboard
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

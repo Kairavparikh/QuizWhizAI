@@ -11,7 +11,7 @@ function SignOut(){
     return (
         <form action = {async () => {
             'use server';
-            await signOut()
+            await signOut({ redirectTo: "/" })
         }}>
         <Button type = "submit" variant = "ghost">Sign Out</Button>
         </form>
