@@ -140,31 +140,6 @@ export async function GET(
       .sort((a, b) => b.studentCount - a.studentCount)
       .slice(0, 5);
 
-    // Generate AI teaching recommendations
-    const recommendations = topicMasconceptions.map(m => {
-      let priority: "CRITICAL" | "HIGH" | "MEDIUM" = "MEDIUM";
-      let action = "";
-
-      if (m.avgStrength >= 7) {
-        priority = "CRITICAL";
-        action = `Retest the class on "${m.concept}" — strong misconception detected`;
-      } else if (m.avgStrength >= 4) {
-        priority = "HIGH";
-        action = `${Math.round((m.studentCount / studentIds.length) * 100)}% of students struggle with "${m.concept}" — assign review quiz`;
-      } else {
-        action = `Confidence is low on "${m.concept}" — consider reteaching the concept`;
-      }
-
-      return {
-        topic: m.concept,
-        misconceptionType: m.type,
-        studentCount: m.studentCount,
-        priority,
-        action,
-        avgStrength: m.avgStrength,
-      };
-    }).slice(0, 5);
-
     // Get class assignments and completion data
     const classAssignments = await db.query.quizAssignments.findMany({
       where: eq(quizAssignments.classId, classId),
@@ -183,18 +158,51 @@ export async function GET(
     let totalScore = 0;
     let totalScoreCount = 0;
 
+    // Student performance per assignment
+    const studentPerformanceByAssignment = [];
+
+    // Create a map of studentId to student info for quick lookup
+    const studentMap = new Map(members.map(m => [m.studentId, m.student]));
+
     for (const assignment of classAssignments) {
       const submissions = await db.query.quizzSubmissions.findMany({
         where: eq(quizzSubmissions.quizzId, assignment.quizId),
       });
 
+      const assignmentScores = [];
       if (submissions.length > 0) {
         completedAssignmentsCount += submissions.length;
         submissions.forEach(sub => {
-          totalScore += sub.score;
-          totalScoreCount++;
+          if (sub.score !== null) {
+            totalScore += sub.score;
+            totalScoreCount++;
+            const student = studentMap.get(sub.userId);
+            assignmentScores.push({
+              studentId: sub.userId,
+              studentName: student?.name || 'Unknown',
+              studentEmail: student?.email || '',
+              score: sub.score,
+              submittedAt: sub.createdAt,
+            });
+          }
         });
       }
+
+      // Calculate average score for this assignment
+      const avgAssignmentScore = assignmentScores.length > 0
+        ? Math.round(assignmentScores.reduce((sum, s) => sum + s.score, 0) / assignmentScores.length)
+        : 0;
+
+      studentPerformanceByAssignment.push({
+        assignmentId: assignment.id,
+        quizName: assignment.quiz.name,
+        dueDate: assignment.dueDate,
+        totalStudents: studentIds.length,
+        completedCount: submissions.length,
+        completionRate: Math.round((submissions.length / studentIds.length) * 100),
+        averageScore: avgAssignmentScore,
+        submissions: assignmentScores,
+      });
     }
 
     const averageClassScore = totalScoreCount > 0 ? Math.round(totalScore / totalScoreCount) : 0;
@@ -227,6 +235,8 @@ export async function GET(
     // Group by date and calculate averages
     const performanceByDate: { [key: string]: { scores: number[], confidences: number[], total: number } } = {};
     allSubmissions.forEach(sub => {
+      if (sub.score === null) return;
+
       const date = new Date(sub.createdAt).toISOString().split('T')[0];
       if (!performanceByDate[date]) {
         performanceByDate[date] = { scores: [], confidences: [], total: 0 };
@@ -263,6 +273,81 @@ export async function GET(
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
+    // Generate broader, more actionable AI teaching recommendations
+    const recommendations = [];
+
+    // Recommendation 1: Overall class performance
+    if (averageClassScore < 60) {
+      recommendations.push({
+        priority: "CRITICAL" as const,
+        action: `Class average is ${averageClassScore}% - Consider reviewing foundational concepts and providing additional practice materials`,
+        category: "Class Performance",
+        affectedStudents: studentIds.length,
+        suggestion: "Schedule a review session covering the most challenging topics. Break down complex concepts into smaller, digestible parts.",
+      });
+    } else if (averageClassScore < 75) {
+      recommendations.push({
+        priority: "HIGH" as const,
+        action: `Class average is ${averageClassScore}% - Target specific knowledge gaps to improve overall understanding`,
+        category: "Class Performance",
+        affectedStudents: studentIds.length,
+        suggestion: "Identify the 2-3 topics with lowest scores and create focused practice assignments.",
+      });
+    }
+
+    // Recommendation 2: Completion rate
+    if (completionRate < 60) {
+      recommendations.push({
+        priority: "HIGH" as const,
+        action: `Only ${completionRate}% assignment completion rate - Engagement strategies needed`,
+        category: "Student Engagement",
+        affectedStudents: Math.round(studentIds.length * (1 - completionRate / 100)),
+        suggestion: "Reach out to students who haven't completed assignments. Consider shorter quizzes or extended deadlines.",
+      });
+    }
+
+    // Recommendation 3: Confidence accuracy
+    if (confidenceAccuracy < 70) {
+      recommendations.push({
+        priority: "MEDIUM" as const,
+        action: `Students are overconfident - Only ${confidenceAccuracy}% accuracy when confident`,
+        category: "Metacognition",
+        affectedStudents: studentIds.length,
+        suggestion: "Teach self-assessment strategies. Encourage students to explain their reasoning before answering.",
+      });
+    }
+
+    // Recommendation 4: Top misconceptions
+    if (topMisconceptions.length > 0) {
+      const topMisconception = topMisconceptions[0];
+      const percentage = Math.round((topMisconception.studentCount / studentIds.length) * 100);
+      recommendations.push({
+        priority: topMisconception.avgStrength >= 7 ? "CRITICAL" as const : "HIGH" as const,
+        action: `${percentage}% of students show confusion in fundamental concepts`,
+        category: "Knowledge Gaps",
+        affectedStudents: topMisconception.studentCount,
+        suggestion: `Focus on core principles. Use multiple examples and varied practice problems. Consider peer teaching or group activities.`,
+      });
+    }
+
+    // Recommendation 5: Learning state distribution
+    const highConfWrong = learningStateDistribution.HIGH_CONFIDENCE_WRONG || 0;
+    const totalResponses = Object.values(learningStateDistribution).reduce((a: number, b: any) => a + (b as number), 0);
+    if (highConfWrong > 0 && totalResponses > 0) {
+      const highConfWrongPercent = Math.round((highConfWrong / totalResponses) * 100);
+      if (highConfWrongPercent > 15) {
+        recommendations.push({
+          priority: "HIGH" as const,
+          action: `${highConfWrongPercent}% of answers show strong misconceptions (confident but incorrect)`,
+          category: "Misconceptions",
+          affectedStudents: studentIds.length,
+          suggestion: "Address common misconceptions directly. Use formative assessments to identify and correct misunderstandings early.",
+        });
+      }
+    }
+
+    const finalRecommendations = recommendations.slice(0, 5);
+
     return NextResponse.json({
       studentCount: members.length,
       students: members.map(m => ({
@@ -275,7 +360,7 @@ export async function GET(
       topicMastery,
       learningStateDistribution,
       weaknessScoreByTopic,
-      recommendations,
+      recommendations: finalRecommendations,
       totalQuizzesTaken: studentQuizzes.length,
       totalResponses: allResponses.length,
       // New comprehensive analytics
@@ -286,6 +371,7 @@ export async function GET(
       classMasteryLevel,
       confidenceAccuracy,
       performanceOverTime,
+      studentPerformanceByAssignment,
     });
   } catch (e: any) {
     console.error("Error fetching class analytics:", e);

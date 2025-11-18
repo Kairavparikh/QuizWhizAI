@@ -198,7 +198,7 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
 
             <div className="text-center mb-8 py-6">
               <div className="flex items-baseline justify-center">
-                <span className="text-6xl font-extrabold text-gray-900 dark:text-gray-100">$19.99</span>
+                <span className="text-6xl font-extrabold text-gray-900 dark:text-gray-100">$4.99</span>
                 <span className="text-xl text-gray-600 dark:text-gray-400 ml-2">/month</span>
               </div>
             </div>
@@ -262,7 +262,7 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
 
             <div className="text-center mb-8 py-6">
               <div className="flex items-baseline justify-center">
-                <span className="text-6xl font-extrabold text-gray-900 dark:text-gray-100">$19.99</span>
+                <span className="text-6xl font-extrabold text-gray-900 dark:text-gray-100">$9.99</span>
                 <span className="text-xl text-gray-600 dark:text-gray-400 ml-2">/month</span>
               </div>
             </div>
@@ -285,10 +285,6 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
 
             <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
               <ul className="space-y-4">
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base"><strong>All Premium features</strong></span>
-                </li>
                 <li className="flex items-start gap-4">
                   <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
                   <span className="text-gray-700 dark:text-gray-300 text-base">Create unlimited classes</span>

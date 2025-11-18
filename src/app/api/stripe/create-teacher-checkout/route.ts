@@ -49,8 +49,8 @@ export const POST = async () => {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-  // Education Plan Price ID - you'll need to create this in Stripe Dashboard
-  const educationPlanPriceId = process.env.STRIPE_EDUCATION_PRICE_ID || "price_education_plan";
+  // Education Plan Price ID - $9.99/month
+  const educationPlanPriceId = process.env.STRIPE_EDUCATION_PRICE_ID || "price_1SUDHbDJtFkaXjyBAhpySPCT";
 
   try {
     const session = await stripe.checkout.sessions.create({

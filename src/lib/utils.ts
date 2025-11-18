@@ -26,8 +26,8 @@ export function convertDateToString(date: Date) : string{
   return formattedDate;
 
 }
-export const PRICE_ID: string = "price_1Rr03LDE6ktIMFgV30vmtxCH"; // Test price ID for localhost
-//export const PRICE_ID: string = "price_1RsTYaDJtFkaXjyBPwVjXdOV"; // Live price ID for production
+export const PRICE_ID: string = "price_1SUtbRDJtFkaXjyB9vlKKD7M"; // Premium Student Plan - $4.99/month
+//export const PRICE_ID: string = "price_1Rr03LDE6ktIMFgV30vmtxCH"; // Old test price ID
 
 // Fisher-Yates shuffle algorithm to randomize array order
 export function shuffleArray<T>(array: T[]): T[] {

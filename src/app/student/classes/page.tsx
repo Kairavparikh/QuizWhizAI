@@ -207,7 +207,7 @@ export default function StudentClassesPage() {
             <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
             <h2 className="text-xl font-semibold mb-2">No Classes Yet</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              You haven't joined any classes yet. Ask your teacher for a join code!
+              You haven&apos;t joined any classes yet. Ask your teacher for a join code!
             </p>
             <Button onClick={() => router.push("/dashboard")}>
               Go to Dashboard
