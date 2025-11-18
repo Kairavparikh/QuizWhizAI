@@ -161,7 +161,7 @@ export async function GET(
     // Student performance per assignment
     const studentPerformanceByAssignment: Array<{
       assignmentId: number;
-      quizName: string;
+      quizName: string | null;
       dueDate: string | null;
       totalStudents: number;
       completedCount: number;
@@ -194,7 +194,7 @@ export async function GET(
       if (submissions.length > 0) {
         completedAssignmentsCount += submissions.length;
         submissions.forEach(sub => {
-          if (sub.score !== null) {
+          if (sub.score !== null && sub.userId) {
             totalScore += sub.score;
             totalScoreCount++;
             const student = studentMap.get(sub.userId);
@@ -217,7 +217,7 @@ export async function GET(
       studentPerformanceByAssignment.push({
         assignmentId: assignment.id,
         quizName: assignment.quiz.name,
-        dueDate: assignment.dueDate,
+        dueDate: assignment.dueDate ? assignment.dueDate.toISOString() : null,
         totalStudents: studentIds.length,
         completedCount: submissions.length,
         completionRate: Math.round((submissions.length / studentIds.length) * 100),
@@ -269,11 +269,9 @@ export async function GET(
       const responses = sub.questionResponses || [];
       const confidenceValues = responses.map(r => {
         switch(r.confidence) {
-          case 'VERY_CONFIDENT': return 5;
-          case 'CONFIDENT': return 4;
-          case 'SOMEWHAT_CONFIDENT': return 3;
-          case 'NOT_CONFIDENT': return 2;
-          case 'GUESSING': return 1;
+          case 'high': return 5;
+          case 'medium': return 3;
+          case 'low': return 1;
           default: return 3;
         }
       });

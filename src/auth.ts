@@ -40,12 +40,14 @@ export const {
         session.user.id = user.id;
 
         // Fetch the user's role from the database
-        const dbUser = await db.query.users.findFirst({
-          where: eq(users.id, user.id),
-        });
+        if (user.id) {
+          const dbUser = await db.query.users.findFirst({
+            where: eq(users.id, user.id),
+          });
 
-        if (dbUser) {
-          (session.user as any).role = dbUser.role;
+          if (dbUser) {
+            (session.user as any).role = dbUser.role;
+          }
         }
       }
       return session;

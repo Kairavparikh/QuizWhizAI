@@ -169,6 +169,7 @@ export const questionAnswersRelations = relations(questionsAnswers, ({ one }) =>
 export const quizzSubmissions = pgTable("quizz_submissions", {
   id:serial("id").primaryKey(),
   quizzId: integer("quizz_id"),
+  userId: text("user_id").references(() => users.id),
   score: integer("score"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
@@ -178,6 +179,10 @@ export const quizzSubmissionsRelations = relations(quizzSubmissions,
     quizz:one(quizzes, {
       fields: [quizzSubmissions.quizzId],
       references: [quizzes.id],
+    }),
+    user: one(users, {
+      fields: [quizzSubmissions.userId],
+      references: [users.id],
     }),
     questionResponses: many(questionResponses),
   })

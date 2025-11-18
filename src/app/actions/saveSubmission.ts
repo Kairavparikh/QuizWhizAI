@@ -21,6 +21,7 @@ export async function saveSubmission(sub: Submission, quizzId: number){
     const newSubmission = await db.insert(quizzSubmissions).values({
         score,
         quizzId,
+        userId,
     }).returning({insertedId: quizzSubmissions.id});
     const subissionId = newSubmission[0].insertedId;
 

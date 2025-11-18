@@ -757,7 +757,7 @@ export default function ClassDetailPage() {
                           <div className="flex items-start justify-between mb-4">
                             <div>
                               <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                                {assignment.quizName}
+                                {assignment.quizName || 'Untitled Quiz'}
                               </h3>
                               {assignment.dueDate && (
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
