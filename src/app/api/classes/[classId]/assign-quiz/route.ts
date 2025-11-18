@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { classes, quizAssignments } from "@/db/schema";
+import { classes, quizAssignments, classMembers, notifications, quizzes } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 // POST - Assign quiz to class
@@ -45,6 +45,51 @@ export async function POST(
       requireConfidence: requireConfidence ?? true,
       status: "active",
     }).returning();
+
+    // Get quiz details for notification
+    const quiz = await db.query.quizzes.findFirst({
+      where: eq(quizzes.id, parseInt(quizId)),
+    });
+
+    // Get all students in the class
+    const members = await db.query.classMembers.findMany({
+      where: eq(classMembers.classId, classId),
+      with: {
+        student: true,
+      },
+    });
+
+    // Create notifications for all students
+    if (members.length > 0 && quiz) {
+      const dueDateStr = dueDate
+        ? new Date(dueDate).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          })
+        : 'No due date';
+
+      const notificationPromises = members.map((member) =>
+        db.insert(notifications).values({
+          userId: member.studentId,
+          type: "ASSIGNMENT_POSTED",
+          title: `New Quiz: ${quiz.name || 'Untitled Quiz'}`,
+          message: `Your teacher has assigned a new quiz in ${classData.name}. Due: ${dueDateStr}`,
+          classId: classId,
+          assignmentId: assignment.id,
+          quizId: parseInt(quizId),
+          dueDate: dueDate ? new Date(dueDate) : null,
+          link: `/student/classes/${classId}/assignments`,
+          createdById: userId,
+          read: false,
+        })
+      );
+
+      await Promise.all(notificationPromises);
+
+      // TODO: Send email notifications (will implement with Resend)
+      console.log(`Notifications sent to ${members.length} students`);
+    }
 
     return NextResponse.json({ assignment, success: true });
   } catch (e: any) {

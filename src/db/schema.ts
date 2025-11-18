@@ -39,6 +39,16 @@ export const misconceptionPatternType = pgEnum("misconception_pattern_type", [
 ]);
 export const questionMisconceptionRelation = pgEnum("question_misconception_relation", ["reveals", "tests", "reinforces"]);
 
+// Notification type enum
+export const notificationType = pgEnum("notification_type", [
+  "ASSIGNMENT_POSTED",
+  "ANNOUNCEMENT",
+  "QUIZ_GRADED",
+  "STUDENT_JOINED_CLASS",
+  "QUIZ_REMINDER",
+  "CLASS_UPDATE"
+]);
+
 export const users = pgTable("user", {
   id: text("id")
     .primaryKey()
@@ -436,6 +446,46 @@ export const quizAssignmentsRelations = relations(quizAssignments, ({ one }) => 
   }),
   quiz: one(quizzes, {
     fields: [quizAssignments.quizId],
+    references: [quizzes.id],
+  }),
+}));
+
+// Notifications table
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").references(() => users.id).notNull(), // recipient
+  type: notificationType("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  classId: integer("class_id").references(() => classes.id),
+  assignmentId: integer("assignment_id").references(() => quizAssignments.id),
+  quizId: integer("quiz_id").references(() => quizzes.id),
+  dueDate: timestamp("due_date"),
+  link: text("link"), // deep link to resource
+  read: boolean("read").default(false).notNull(),
+  createdById: text("created_by_id").references(() => users.id), // teacher who created it
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+  createdBy: one(users, {
+    fields: [notifications.createdById],
+    references: [users.id],
+  }),
+  class: one(classes, {
+    fields: [notifications.classId],
+    references: [classes.id],
+  }),
+  assignment: one(quizAssignments, {
+    fields: [notifications.assignmentId],
+    references: [quizAssignments.id],
+  }),
+  quiz: one(quizzes, {
+    fields: [notifications.quizId],
     references: [quizzes.id],
   }),
 }));

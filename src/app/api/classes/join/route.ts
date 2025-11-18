@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { classes, classMembers, users } from "@/db/schema";
+import { classes, classMembers, users, notifications } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 // POST - Join a class with a code
@@ -57,6 +57,19 @@ export async function POST(req: NextRequest) {
       classId: classData.id,
       studentId: userId,
     }).returning();
+
+    // Notify the teacher that a student joined
+    const studentName = user?.name || 'A student';
+    await db.insert(notifications).values({
+      userId: classData.teacherId,
+      type: "STUDENT_JOINED_CLASS",
+      title: "New Student Joined",
+      message: `${studentName} has joined your class "${classData.name}"`,
+      classId: classData.id,
+      link: `/teacher/classes/${classData.id}`,
+      createdById: userId,
+      read: false,
+    });
 
     return NextResponse.json({
       success: true,

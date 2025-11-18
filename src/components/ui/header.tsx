@@ -3,10 +3,11 @@ import {Button} from "./button"
 import Image from "next/image";
 import Link from "next/link"
 import {
-    DropdownMenu, 
+    DropdownMenu,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { NavMenu } from "../NavMenu";
+import { NotificationBell } from "../NotificationBell";
 function SignOut(){
     return (
         <form action = {async () => {
@@ -32,11 +33,12 @@ const Header = async () => {
                 <div>
                 {
                     session?.user ? (
-                        <div className = "flex item-center gap-4">
+                        <div className = "flex items-center gap-2">
+                            <NotificationBell />
                             {
-                                session.user.name && session.user.image &&<DropdownMenu> <DropdownMenuTrigger asChild>
+                                session.user.name && session.user.image && <DropdownMenu> <DropdownMenuTrigger asChild>
                                     <Button variant = "ghost">
-                                <Image 
+                                <Image
                                 src={session.user.image}
                                 alt ={session.user.name}
                                 width={38}

@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, BookOpen, BarChart3, Plus, Trash2, Calendar, CheckCircle2, XCircle, Brain, TrendingUp, AlertCircle, Sparkles, Award, Target } from "lucide-react";
 import AssignQuizDialog from "./AssignQuizDialog";
+import { AnnouncementModal } from "@/components/AnnouncementModal";
+import { AnnouncementsHistory } from "@/components/AnnouncementsHistory";
 
 interface Student {
   id: string;
@@ -294,10 +296,15 @@ export default function ClassDetailPage() {
         <TabsContent value="students">
           <Card>
             <CardHeader>
-              <CardTitle>Enrolled Students ({classData.members.length})</CardTitle>
-              <CardDescription>
-                Students who have joined this class
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Enrolled Students ({classData.members.length})</CardTitle>
+                  <CardDescription>
+                    Students who have joined this class
+                  </CardDescription>
+                </div>
+                <AnnouncementModal classId={parseInt(classId)} className={classData.name} />
+              </div>
             </CardHeader>
             <CardContent>
               {classData.members.length === 0 ? (
@@ -331,6 +338,11 @@ export default function ClassDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Announcements History */}
+          <div className="mt-6">
+            <AnnouncementsHistory classId={parseInt(classId)} />
+          </div>
         </TabsContent>
 
         {/* Assignments Tab */}

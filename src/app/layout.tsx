@@ -4,7 +4,8 @@ import './globals.css'
 import { SessionProvider } from 'next-auth/react'
 import Header from '@/components/ui/header'
 import { Analytics } from '@vercel/analytics/next'
-import { SpeedInsights } from '@vercel/speed-insights/next' 
+import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Toaster } from '@/components/ui/toaster' 
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -29,6 +30,7 @@ export default function RootLayout({
             </p>
           </div>
           {children}
+          <Toaster />
           <Analytics />
           <SpeedInsights />
         </SessionProvider>
