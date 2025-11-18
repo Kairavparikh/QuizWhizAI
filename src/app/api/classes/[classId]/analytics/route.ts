@@ -159,7 +159,22 @@ export async function GET(
     let totalScoreCount = 0;
 
     // Student performance per assignment
-    const studentPerformanceByAssignment = [];
+    const studentPerformanceByAssignment: Array<{
+      assignmentId: number;
+      quizName: string;
+      dueDate: string | null;
+      totalStudents: number;
+      completedCount: number;
+      completionRate: number;
+      averageScore: number;
+      submissions: Array<{
+        studentId: string;
+        studentName: string;
+        studentEmail: string;
+        score: number;
+        submittedAt: Date;
+      }>;
+    }> = [];
 
     // Create a map of studentId to student info for quick lookup
     const studentMap = new Map(members.map(m => [m.studentId, m.student]));
@@ -169,7 +184,13 @@ export async function GET(
         where: eq(quizzSubmissions.quizzId, assignment.quizId),
       });
 
-      const assignmentScores = [];
+      const assignmentScores: Array<{
+        studentId: string;
+        studentName: string;
+        studentEmail: string;
+        score: number;
+        submittedAt: Date;
+      }> = [];
       if (submissions.length > 0) {
         completedAssignmentsCount += submissions.length;
         submissions.forEach(sub => {
@@ -274,7 +295,13 @@ export async function GET(
       .sort((a, b) => a.date.localeCompare(b.date));
 
     // Generate broader, more actionable AI teaching recommendations
-    const recommendations = [];
+    const recommendations: Array<{
+      priority: "CRITICAL" | "HIGH" | "MEDIUM";
+      action: string;
+      category: string;
+      affectedStudents: number;
+      suggestion: string;
+    }> = [];
 
     // Recommendation 1: Overall class performance
     if (averageClassScore < 60) {
