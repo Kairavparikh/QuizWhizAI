@@ -16,10 +16,26 @@ const Page = async () => {
     signIn();
     return;
   }
-  
+
+  const userRole = (session?.user as any)?.role;
+  const isStudent = userRole === "STUDENT";
+
+  // Students always have access to the choice screen (for joining classes and taking notes)
+  // Teachers need subscription or free trials
+  if (isStudent) {
+    return (
+      <div className="flex flex-col flex-1">
+        <main className="py-11 flex flex-col gap-4 flex-1 mt-24">
+          <ChoiceScreen />
+        </main>
+      </div>
+    );
+  }
+
+  // For teachers, check subscription status
   const isSubscribed: boolean | undefined | null = await getUserSubscriptions({ userId });
   const freeTrialData = await checkFreeTrials();
-  
+
   const onNaviagteToUpgrate = async (price:string) => {
 
   try{
@@ -38,7 +54,7 @@ const Page = async () => {
       console.log('Subscribe Button Error', error);
   }
 }
-  
+
   return (
     <div className="flex flex-col flex-1">
       <main className="py-11 flex flex-col gap-4 flex-1 mt-24">

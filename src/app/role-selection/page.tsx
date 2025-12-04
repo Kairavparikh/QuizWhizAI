@@ -20,11 +20,15 @@ export default function RoleSelectionPage() {
     // If authenticated and already has a role, redirect to appropriate dashboard
     if (status === "authenticated" && session?.user) {
       const userRole = (session.user as any)?.role;
-      if (userRole === "TEACHER") {
-        router.push("/teacher/dashboard");
-      } else if (userRole === "STUDENT") {
-        router.push("/dashboard");
+      // Only redirect if user has a role (not null/undefined)
+      if (userRole) {
+        if (userRole === "TEACHER") {
+          router.push("/teacher/dashboard");
+        } else if (userRole === "STUDENT") {
+          router.push("/dashboard");
+        }
       }
+      // If userRole is null/undefined, stay on role selection page
     }
   }, [status, session, router]);
 
@@ -208,7 +212,7 @@ export default function RoleSelectionPage() {
               </Button>
 
               <div className="text-sm font-semibold text-purple-600 dark:text-purple-400">
-                $20/month Education Plan
+                $9.99/month Education Plan
               </div>
             </div>
           </div>

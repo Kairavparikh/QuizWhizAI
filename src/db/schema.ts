@@ -60,7 +60,7 @@ export const users = pgTable("user", {
   stripeCustomerId: text("stripe_customer_id"),
   subscribed: boolean("subscribed"),
   freeTrialsUsed: integer("free_trials_used").default(0),
-  role: userRole("role").default("STUDENT"),
+  role: userRole("role"),
 })
 
 export const userRelations = relations(users, ({many}) => ({

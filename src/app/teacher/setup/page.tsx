@@ -51,7 +51,7 @@ export default function TeacherSetupPage() {
         <div className="bg-white dark:bg-gray-800 rounded-3xl border-2 border-purple-200 dark:border-purple-700 p-10 shadow-2xl mb-12">
           <div className="text-center mb-8">
             <div className="text-6xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              $20
+              $9.99
               <span className="text-2xl text-gray-500 dark:text-gray-400">/month</span>
             </div>
             <p className="text-gray-600 dark:text-gray-400">

@@ -70,6 +70,7 @@ export default function StudentClassesPage() {
   const router = useRouter();
   const [classes, setClasses] = useState<ClassMembership[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showJoinModal, setShowJoinModal] = useState(false);
 
   useEffect(() => {
     fetchClasses();
@@ -209,9 +210,18 @@ export default function StudentClassesPage() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               You haven&apos;t joined any classes yet. Ask your teacher for a join code!
             </p>
-            <Button onClick={() => router.push("/dashboard")}>
-              Go to Dashboard
-            </Button>
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={() => setShowJoinModal(true)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Join a Class
+              </Button>
+              <Button onClick={() => router.push("/dashboard")} variant="outline">
+                Go to Dashboard
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -372,6 +382,106 @@ export default function StudentClassesPage() {
           })}
         </div>
       )}
+
+      {/* Join Class Modal */}
+      {showJoinModal && (
+        <JoinClassModal
+          onClose={() => setShowJoinModal(false)}
+          onSuccess={() => {
+            setShowJoinModal(false);
+            fetchClasses();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Join Class Modal Component
+function JoinClassModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [joinCode, setJoinCode] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleJoin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setJoining(true);
+
+    try {
+      const response = await fetch("/api/classes/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ joinCode }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        onSuccess();
+      } else {
+        setError(data.error || "Failed to join class");
+      }
+    } catch (error) {
+      console.error("Error joining class:", error);
+      setError("An error occurred. Please try again.");
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-8">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          Join a Class
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          Enter the 6-digit code your teacher gave you
+        </p>
+
+        <form onSubmit={handleJoin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Class Code
+            </label>
+            <input
+              type="text"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 text-center text-2xl font-bold tracking-widest"
+              placeholder="ABC123"
+              maxLength={6}
+              required
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+              <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              onClick={onClose}
+              variant="outline"
+              className="flex-1"
+              disabled={joining}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              disabled={joining || joinCode.length !== 6}
+            >
+              {joining ? "Joining..." : "Join Class"}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
