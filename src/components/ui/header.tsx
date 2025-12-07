@@ -1,63 +1,17 @@
-import {auth, signOut} from "@/auth"
-import {Button} from "./button"
-import Image from "next/image";
-import Link from "next/link"
-import {
-    DropdownMenu,
-    DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { NavMenu } from "../NavMenu";
-import { NotificationBell } from "../NotificationBell";
-function SignOut(){
-    return (
-        <form action = {async () => {
-            'use server';
-            await signOut({ redirectTo: "/" })
-        }}>
-        <Button type = "submit" variant = "ghost">Sign Out</Button>
-        </form>
-    )
-}
+import { auth } from "@/auth"
+import { Sidebar } from "../Sidebar";
+import { HeaderContent } from "../HeaderContent";
 
 const Header = async () => {
     const session = await auth();
-    return(
-        <header>
-            <nav className = "px-4 py-2.5">
-                <div className = "flex flex-wrap justify-between items-center mx-auto nax-w-screen-xl">
-                    <Link href="/">
-                        <h1 className = "text-3xl font-bold cursor-pointer hover:text-blue-600 transition-colors">
-                            QuizWhizAI
-                        </h1>
-                    </Link>
-                <div>
-                {
-                    session?.user ? (
-                        <div className = "flex items-center gap-2">
-                            <NotificationBell />
-                            {
-                                session.user.name && session.user.image && <DropdownMenu> <DropdownMenuTrigger asChild>
-                                    <Button variant = "ghost">
-                                <Image
-                                src={session.user.image}
-                                alt ={session.user.name}
-                                width={38}
-                                height={38}
-                                className = "rounded-full"
-                                />
-                                </Button>
-                                </DropdownMenuTrigger>
-                                <NavMenu/>
-                                </DropdownMenu>
-                            }
-                            <SignOut />
-                        </div>
-                    ) : <Link href = "/api/auth/signin"><Button variant = "link" className="rounded-xl border">Sign In</Button></Link>
-                }
-            </div>
-        </div>
-            </nav>
-        </header>
+    const userRole = (session?.user as any)?.role;
+    const isSubscribed = (session?.user as any)?.subscribed;
+
+    return (
+        <>
+            {session?.user && <Sidebar userRole={userRole} isSubscribed={isSubscribed} />}
+            <HeaderContent user={session?.user} userRole={userRole} isSubscribed={isSubscribed} />
+        </>
     )
 }
 

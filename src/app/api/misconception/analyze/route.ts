@@ -25,6 +25,9 @@ interface MisconceptionAnalysis {
   relatedConcepts: string[];
   suggestedQuestionTypes: string[];
   shouldTrack: boolean; // Whether this warrants creating a misconception entry
+  hierarchyLevel: "domain" | "topic" | "subtopic";
+  isRootCause: boolean;
+  learningResources: Array<{ title: string; type: string; url?: string }>;
 }
 
 export async function POST(req: NextRequest) {
@@ -96,14 +99,20 @@ Return a JSON object with this exact structure:
   "cognitiveErrorPattern": "Pattern type (e.g., 'inverse_optimization', 'cause_vs_effect', 'keyword_matching', 'correlation_vs_causation', 'temporal_confusion', 'part_whole_confusion', 'scope_confusion', 'other')",
   "relatedConcepts": ["array", "of", "related", "concepts"],
   "suggestedQuestionTypes": ["array", "of", "question", "types", "to", "test", "this"],
-  "shouldTrack": boolean // true if this is a significant misconception worth tracking, false if it's just a minor error or guess
+  "shouldTrack": boolean, // true if this is a significant misconception worth tracking
+  "hierarchyLevel": "domain" | "topic" | "subtopic",
+  "isRootCause": boolean, // true if this seems to be a fundamental misunderstanding rather than a symptom
+  "learningResources": [
+    { "title": "Resource Title", "type": "video|article|documentation", "url": "optional_url" }
+  ]
 }
 
 Important:
 - Be specific and actionable
 - Focus on the WHY, not just the WHAT
 - Set shouldTrack to false for random guesses or minor slips
-- Set shouldTrack to true for systematic conceptual errors`,
+- Set shouldTrack to true for systematic conceptual errors
+- Suggest real, high-quality learning resources if possible (e.g. documentation, famous tutorials)`,
     });
 
     const userMessage = new HumanMessage({
@@ -199,6 +208,10 @@ Provide the misconception analysis in JSON format.`,
           correctStreakCount: isCorrect ? 1 : 0,
           lastTestedAt: new Date(),
           resolvedAt: isCorrect && confidence === "low" ? null : null,
+          hierarchyLevel: analysis.hierarchyLevel,
+          learningResources: JSON.stringify(analysis.learningResources),
+          // Note: rootCauseId would typically be linked in a separate pass or if the AI identifies an existing ID, 
+          // but for now we'll leave it null as linking to existing IDs requires more complex logic
         })
         .returning();
 

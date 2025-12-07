@@ -14,8 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-import { BarChartBig, Plus, RefreshCw, GraduationCap, BookOpen } from "lucide-react"
-import { auth } from "@/auth"
+import { BarChartBig, Plus, RefreshCw, GraduationCap, BookOpen, Sparkles, LogOut, User, Settings } from "lucide-react"
+import { auth, signOut } from "@/auth"
 
 export async function NavMenu() {
   const session = await auth();
@@ -42,8 +42,8 @@ export async function NavMenu() {
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Link href="/quizz/new" className="flex w-full items-center">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Quiz
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Study Tools
                 </Link>
               </DropdownMenuItem>
             </>
@@ -74,6 +74,20 @@ export async function NavMenu() {
           </DropdownMenuItem>
 
         </DropdownMenuGroup>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem asChild>
+          <form action={async () => {
+            'use server';
+            await signOut({ redirectTo: "/" })
+          }} className="w-full">
+            <button type="submit" className="flex w-full items-center cursor-pointer">
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </button>
+          </form>
+        </DropdownMenuItem>
 
       </DropdownMenuContent>
   )

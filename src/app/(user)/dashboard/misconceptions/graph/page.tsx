@@ -1,18 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import ReactFlow, {
-  Node,
-  Edge,
-  Background,
-  Controls,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
-  MarkerType,
-  Position,
-} from "reactflow";
-import "reactflow/dist/style.css";
+import { useState, useEffect, useCallback } from "react";
+import KnowledgeGalaxy from "@/components/misconceptions/KnowledgeGalaxy";
 import { Button } from "@/components/ui/button";
 import { Brain, ArrowLeft, Sparkles, AlertCircle, TrendingUp, CheckCircle, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -35,64 +25,7 @@ interface GraphData {
   edges: any[];
 }
 
-const CustomNode = ({ data }: any) => {
-  const getStatusColor = () => {
-    switch (data.status) {
-      case "active":
-        return "bg-orange-500 border-orange-600";
-      case "resolving":
-        return "bg-blue-500 border-blue-600";
-      case "resolved":
-        return "bg-green-500 border-green-600";
-      default:
-        return "bg-gray-500 border-gray-600";
-    }
-  };
 
-  const getStatusIcon = () => {
-    switch (data.status) {
-      case "active":
-        return <AlertCircle className="w-3 h-3" />;
-      case "resolving":
-        return <TrendingUp className="w-3 h-3" />;
-      case "resolved":
-        return <CheckCircle className="w-3 h-3" />;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div
-      className={`px-6 py-4 rounded-xl ${getStatusColor()} text-white shadow-lg cursor-pointer hover:shadow-xl transition-shadow min-w-[160px]`}
-      onClick={data.onClick}
-    >
-      <div className="flex items-center gap-2 mb-1">
-        {getStatusIcon()}
-        <div className="font-bold text-sm">{data.label}</div>
-      </div>
-      <div className="text-lg font-bold">{data.progress}%</div>
-    </div>
-  );
-};
-
-const CategoryHeaderNode = ({ data }: any) => {
-  return (
-    <div className="text-center p-2">
-      <div className="font-bold text-lg text-gray-900 dark:text-gray-100">
-        {data.category}
-      </div>
-      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-        {data.count} {data.count === 1 ? 'topic' : 'topics'}
-      </div>
-    </div>
-  );
-};
-
-const nodeTypes = {
-  custom: CustomNode,
-  categoryHeader: CategoryHeaderNode,
-};
 
 export default function MisconceptionGraphPage() {
   const router = useRouter();
@@ -101,8 +34,6 @@ export default function MisconceptionGraphPage() {
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [loading, setLoading] = useState(true);
   const [includeResolved, setIncludeResolved] = useState(false);
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
@@ -132,7 +63,6 @@ export default function MisconceptionGraphPage() {
       if (response.ok) {
         const data: GraphData = await response.json();
         setGraphData(data);
-        buildFlowChart(data);
       }
     } catch (error) {
       console.error("Error fetching graph data:", error);
@@ -141,151 +71,7 @@ export default function MisconceptionGraphPage() {
     }
   };
 
-  // Extract broader, more general categories from concepts
-  const extractBroadCategory = (concept: string): string => {
-    // Common academic/topic keywords to identify
-    const generalTopics: { [key: string]: string[] } = {
-      "Mathematics": ["math", "algebra", "calculus", "geometry", "trigonometry", "equation", "function"],
-      "Statistics": ["statistics", "probability", "distribution", "variance", "mean", "median", "regression", "correlation"],
-      "Machine Learning": ["ml", "machine learning", "neural", "model", "training", "learning", "algorithm", "classification", "clustering"],
-      "Data Science": ["data", "analysis", "analytics", "dataset", "feature"],
-      "Programming": ["code", "programming", "function", "variable", "loop", "algorithm", "syntax"],
-      "Physics": ["physics", "force", "energy", "motion", "velocity", "acceleration"],
-      "Chemistry": ["chemistry", "reaction", "molecule", "element", "compound"],
-      "Biology": ["biology", "cell", "organism", "dna", "gene", "evolution"],
-      "Computer Science": ["computer", "algorithm", "complexity", "data structure", "sorting"],
-      "Linear Algebra": ["matrix", "vector", "linear", "eigenvalue", "dimension"],
-      "Optimization": ["optimization", "minimize", "maximize", "gradient", "descent"],
-      "Deep Learning": ["deep learning", "cnn", "rnn", "transformer", "attention"],
-    };
 
-    const conceptLower = concept.toLowerCase();
-
-    // Check if concept matches any general topic
-    for (const [category, keywords] of Object.entries(generalTopics)) {
-      if (keywords.some(keyword => conceptLower.includes(keyword))) {
-        return category;
-      }
-    }
-
-    // If no match, extract first 1-2 words as category
-    const words = concept.split(/[-–—:,\/\s]+/).filter(w => w.length > 2);
-    if (words.length > 0) {
-      return words[0].charAt(0).toUpperCase() + words[0].slice(1);
-    }
-
-    return "General";
-  };
-
-  const buildFlowChart = (data: GraphData) => {
-    if (!data || data.nodes.length === 0) {
-      setNodes([]);
-      setEdges([]);
-      return;
-    }
-
-    // Group nodes by broader categories
-    const categoryGroups: { [key: string]: GraphNode[] } = {};
-    data.nodes.forEach((node) => {
-      const category = extractBroadCategory(node.concept);
-      if (!categoryGroups[category]) {
-        categoryGroups[category] = [];
-      }
-      categoryGroups[category].push(node);
-    });
-
-    const flowNodes: Node[] = [];
-    const flowEdges: Edge[] = [];
-
-    // Upside-down bar graph layout: categories spread horizontally, nodes stack vertically downward
-    const categories = Object.entries(categoryGroups).sort((a, b) => b[1].length - a[1].length);
-    const categoryWidth = 280; // Width of each bar/column
-    const categorySpacing = 100; // Space between columns
-    const nodeHeight = 120; // Height of each node
-    const nodeVerticalGap = 20; // Gap between stacked nodes
-    const topPadding = 100; // Space for category labels
-
-    categories.forEach(([category, misconceptions], categoryIndex) => {
-      // Calculate x position for this category
-      const xPosition = categoryIndex * (categoryWidth + categorySpacing) + 100;
-
-      // Sort by strength (highest priority first)
-      const sortedMisconceptions = [...misconceptions].sort((a, b) => b.strength - a.strength);
-
-      // Add category label node at the top
-      flowNodes.push({
-        id: `category-${category}`,
-        type: "categoryHeader",
-        position: {
-          x: xPosition,
-          y: 20,
-        },
-        data: {
-          category: category,
-          count: misconceptions.length,
-        },
-        style: {
-          background: 'transparent',
-          border: 'none',
-          padding: 0,
-          width: categoryWidth,
-        },
-        draggable: false,
-        selectable: false,
-      });
-
-      // Stack nodes vertically downward
-      sortedMisconceptions.forEach((node, index) => {
-        const progress = Math.max(0, 100 - node.strength * 10);
-        const yPosition = topPadding + (index * (nodeHeight + nodeVerticalGap));
-
-        flowNodes.push({
-          id: node.id.toString(),
-          type: "custom",
-          position: {
-            x: xPosition,
-            y: yPosition,
-          },
-          data: {
-            label: node.label.length > 30 ? node.label.substring(0, 30) + "..." : node.label,
-            status: node.status,
-            progress: Math.round(progress),
-            onClick: () => handleNodeClick(node),
-            fullNode: node,
-          },
-          sourcePosition: Position.Bottom,
-          targetPosition: Position.Top,
-          style: {
-            width: categoryWidth - 20,
-          },
-        });
-
-        // Connect to next node in same category (downward connection)
-        if (index < sortedMisconceptions.length - 1) {
-          flowEdges.push({
-            id: `e-${node.id}-${sortedMisconceptions[index + 1].id}`,
-            source: node.id.toString(),
-            target: sortedMisconceptions[index + 1].id.toString(),
-            type: "straight",
-            animated: node.status !== "resolved",
-            style: {
-              stroke: node.status === "active" ? "#f97316" :
-                      node.status === "resolving" ? "#3b82f6" : "#22c55e",
-              strokeWidth: 3,
-            },
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              color: node.status === "active" ? "#f97316" :
-                     node.status === "resolving" ? "#3b82f6" : "#22c55e",
-            },
-          });
-        }
-      });
-    });
-
-    setNodes(flowNodes);
-    setEdges(flowEdges);
-  };
 
   const handleNodeClick = (node: GraphNode) => {
     setSelectedNode(node);
@@ -499,34 +285,10 @@ export default function MisconceptionGraphPage() {
 
       {/* Full Screen Flow Chart */}
       <div className="flex-1 w-full h-full">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          nodeTypes={nodeTypes}
-          fitView
-          fitViewOptions={{
-            padding: 0.1,
-            minZoom: 0.3,
-            maxZoom: 1.5,
-          }}
-          className="bg-gray-50 dark:bg-gray-900"
-          minZoom={0.1}
-          maxZoom={2}
-        >
-          <Background color="#aaa" gap={16} />
-          <Controls />
-          <MiniMap
-            nodeColor={(node) => {
-              if (node.data.status === "active") return "#f97316";
-              if (node.data.status === "resolving") return "#3b82f6";
-              if (node.data.status === "resolved") return "#22c55e";
-              return "#6b7280";
-            }}
-            position="bottom-right"
-          />
-        </ReactFlow>
+        <KnowledgeGalaxy
+          data={graphData || { nodes: [], edges: [] }}
+          onNodeClick={handleNodeClick}
+        />
       </div>
 
       {/* Side Panel */}

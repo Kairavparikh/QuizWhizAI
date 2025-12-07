@@ -4,7 +4,11 @@ const UserPagesLayout = ({
     children: React.ReactNode
 }) => {
     return (
-        <>{children}</>
+        <div className="w-full flex-1 px-4 sm:px-6 lg:px-8 py-8">
+            <div className="w-full max-w-7xl mx-auto">
+                {children}
+            </div>
+        </div>
     )
 }
 

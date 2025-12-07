@@ -1,10 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, Sparkles, Zap, GraduationCap, ArrowRight, Crown, Star, X } from "lucide-react";
 import { PRICE_ID } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { motion, useInView } from "framer-motion";
+import { useState, useRef } from "react";
 
 interface PricingTableProps {
   isSubscribed: boolean;
@@ -14,11 +16,13 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
   const { data: session } = useSession();
   const router = useRouter();
   const userRole = (session?.user as any)?.role;
+  const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
+  const containerRef = useRef(null);
+  const isInView = useInView(containerRef, { once: true, margin: "-50px" });
 
   const handleUpgradeStudent = async () => {
     console.log("Upgrade button clicked");
-    
-    // Check if Stripe key is available
+
     if (!process.env.NEXT_PUBLIC_PUBLISHABLE_KEY) {
       console.error("Stripe publishable key not found");
       alert("Payment system not configured");
@@ -39,10 +43,10 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
 
       console.log("Response status:", response.status);
       console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-      
+
       const responseText = await response.text();
       console.log("Raw response:", responseText);
-      
+
       if (!response.ok) {
         console.error("API error:", responseText);
         alert(`API Error: ${response.status} - ${responseText}`);
@@ -57,24 +61,23 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
         alert("Invalid response from server");
         return;
       }
-      
+
       console.log("Parsed response data:", data);
-      
+
       if (!data.sessionId) {
         console.error("No sessionId in response");
         alert("No session ID received from server");
         return;
       }
-      
-      // Redirect to Stripe Checkout
-      const stripe = await import('@stripe/stripe-js').then(({ loadStripe }) => 
+
+      const stripe = await import('@stripe/stripe-js').then(({ loadStripe }) =>
         loadStripe(process.env.NEXT_PUBLIC_PUBLISHABLE_KEY!)
       );
-      
+
       if (stripe) {
         console.log("Redirecting to Stripe checkout with sessionId:", data.sessionId);
         const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
-        
+
         if (result.error) {
           console.error("Stripe redirect error:", result.error);
           alert(`Stripe error: ${result.error.message}`);
@@ -112,202 +115,284 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
     ? (userRole === "TEACHER" ? "Education" : "Premium Student")
     : "Free";
 
+  const plans = [
+    {
+      name: "Free",
+      price: 0,
+      period: "forever",
+      description: "Perfect for trying out QuizWhiz",
+      icon: Sparkles,
+      features: [
+        "3 quiz uploads",
+        "Basic quiz generation",
+        "Join classes as student",
+        "Standard support"
+      ],
+      limitations: [
+        "Limited AI features",
+        "No misconception tracking",
+        "No analytics"
+      ],
+      buttonText: "Current Plan",
+      buttonDisabled: true,
+      buttonAction: undefined,
+      isCurrent: !isSubscribed,
+      gradient: "from-gray-500 to-gray-700",
+      bgColor: "bg-gray-50 dark:bg-gray-900/50",
+      iconBg: "bg-gray-100 dark:bg-gray-800",
+      accentColor: "gray"
+    },
+    {
+      name: "Premium Student",
+      price: 4.99,
+      period: "per month",
+      description: "Supercharge your learning journey",
+      icon: Zap,
+      badge: "Most Popular",
+      features: [
+        "Unlimited quiz uploads",
+        "Advanced AI quiz generation",
+        "Misconception tracking",
+        "Spaced repetition system",
+        "Priority support",
+        "Download quiz notes"
+      ],
+      limitations: [],
+      buttonText: isSubscribed && userRole === "STUDENT" ? "Current Plan" : "Upgrade to Premium",
+      buttonDisabled: (userRole === "STUDENT" && isSubscribed) || userRole !== "STUDENT",
+      buttonAction: userRole === "STUDENT" ? handleUpgradeStudent : undefined,
+      isCurrent: isSubscribed && userRole === "STUDENT",
+      gradient: "from-blue-600 via-purple-600 to-pink-600",
+      bgColor: "bg-blue-50 dark:bg-blue-950/30",
+      iconBg: "bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900",
+      accentColor: "blue",
+      isPopular: true
+    },
+    {
+      name: "Education",
+      price: 9.99,
+      period: "per month",
+      description: "Built for educators and classrooms",
+      icon: GraduationCap,
+      features: [
+        "Everything in Premium",
+        "Create unlimited classes",
+        "Assign quizzes to students",
+        "Class-wide analytics dashboard",
+        "Track student progress",
+        "Identify misconception patterns",
+        "Export detailed reports"
+      ],
+      limitations: [],
+      buttonText: isSubscribed && userRole === "TEACHER" ? "Current Plan" : "Upgrade to Education",
+      buttonDisabled: (userRole === "TEACHER" && isSubscribed) || userRole !== "TEACHER",
+      buttonAction: userRole === "TEACHER" ? handleUpgradeTeacher : undefined,
+      isCurrent: isSubscribed && userRole === "TEACHER",
+      gradient: "from-green-600 via-emerald-600 to-teal-600",
+      bgColor: "bg-green-50 dark:bg-green-950/30",
+      iconBg: "bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900",
+      accentColor: "green"
+    }
+  ];
+
   return (
-    <div className="w-full px-8 md:px-16 lg:px-24 xl:px-32">
-      <div className="text-center mb-20">
-        <h1 className="text-6xl md:text-7xl font-bold mb-8 text-gray-900 dark:text-gray-100">
-          Choose Your Plan
-        </h1>
-        <p className="text-2xl text-gray-600 dark:text-gray-400 mb-4">
-          Select the perfect plan for your needs
-        </p>
-        <div className="inline-flex items-center gap-2 bg-white dark:bg-gray-800 px-6 py-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
-          <span className="text-lg text-gray-600 dark:text-gray-400">Current Plan:</span>
-          <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{currentPlanName}</span>
+    <div className="w-full bg-white dark:bg-gray-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16" ref={containerRef}>
+        {/* Header */}
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.div
+            className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 px-4 py-2 rounded-full mb-6"
+            initial={{ scale: 0.9 }}
+            animate={isInView ? { scale: 1 } : {}}
+            transition={{ delay: 0.2, type: "spring" }}
+          >
+            <Crown className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span className="text-sm font-semibold text-blue-900 dark:text-blue-300">
+              Your Plan: {currentPlanName}
+            </span>
+          </motion.div>
+
+          <h1 className="text-5xl md:text-6xl font-black text-gray-900 dark:text-gray-100 mb-4">
+            Simple, Transparent Pricing
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Choose the perfect plan for your needs. Upgrade, downgrade, or cancel anytime.
+          </p>
+        </motion.div>
+
+        {/* Pricing Cards - New Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mb-16">
+          {plans.map((plan, index) => {
+            const Icon = plan.icon;
+            const isPopular = plan.isPopular;
+            const delay = index * 0.1;
+
+            return (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 40 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: 0.4 + delay }}
+                className="relative"
+                onMouseEnter={() => setSelectedPlan(index)}
+                onMouseLeave={() => setSelectedPlan(null)}
+              >
+                {/* Popular Ribbon */}
+                {isPopular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+                    <div className={`bg-gradient-to-r ${plan.gradient} text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm font-bold`}>
+                      <Star className="w-4 h-4 fill-current" />
+                      {plan.badge}
+                    </div>
+                  </div>
+                )}
+
+                {/* Card */}
+                <motion.div
+                  className={`relative h-full rounded-2xl border-2 transition-all duration-300 ${
+                    plan.isCurrent
+                      ? 'border-blue-500 dark:border-blue-400 shadow-lg shadow-blue-500/20'
+                      : selectedPlan === index
+                      ? 'border-gray-300 dark:border-gray-600 shadow-xl'
+                      : 'border-gray-200 dark:border-gray-800 shadow-md'
+                  } ${plan.bgColor} overflow-hidden`}
+                  animate={{
+                    y: selectedPlan === index ? -4 : 0,
+                  }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                >
+                  {/* Current Plan Badge */}
+                  {plan.isCurrent && (
+                    <div className="absolute top-4 right-4 bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-bold">
+                      Active
+                    </div>
+                  )}
+
+                  <div className="p-6 lg:p-8">
+                    {/* Icon */}
+                    <div className={`${plan.iconBg} w-14 h-14 rounded-xl flex items-center justify-center mb-4`}>
+                      <Icon className={`w-7 h-7 ${isPopular ? 'text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300'}`} />
+                    </div>
+
+                    {/* Plan Name */}
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                      {plan.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                      {plan.description}
+                    </p>
+
+                    {/* Price */}
+                    <div className="mb-6">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-5xl font-black text-gray-900 dark:text-gray-100">
+                          ${plan.price}
+                        </span>
+                        <span className="text-gray-600 dark:text-gray-400 text-sm">
+                          /{plan.period.split(' ')[0]}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                        {plan.price === 0 ? 'Free forever' : 'Billed monthly • Cancel anytime'}
+                      </p>
+                    </div>
+
+                    {/* CTA Button */}
+                    <Button
+                      onClick={plan.buttonAction}
+                      disabled={plan.buttonDisabled}
+                      className={`w-full mb-6 py-6 text-base font-semibold rounded-xl transition-all duration-300 ${
+                        plan.buttonDisabled
+                          ? 'bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-500 cursor-not-allowed'
+                          : isPopular
+                          ? `bg-gradient-to-r ${plan.gradient} hover:opacity-90 text-white shadow-lg hover:shadow-xl`
+                          : 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200'
+                      }`}
+                    >
+                      {plan.buttonText}
+                      {!plan.buttonDisabled && <ArrowRight className="w-5 h-5 ml-2 inline" />}
+                    </Button>
+
+                    {/* Divider */}
+                    <div className="h-px bg-gray-200 dark:bg-gray-800 mb-6" />
+
+                    {/* Features */}
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                        What&apos;s included
+                      </p>
+                      {plan.features.map((feature, i) => (
+                        <div key={i} className="flex items-start gap-3">
+                          <div className={`flex-shrink-0 w-5 h-5 rounded-full ${isPopular ? `bg-gradient-to-r ${plan.gradient}` : 'bg-gray-900 dark:bg-gray-100'} flex items-center justify-center mt-0.5`}>
+                            <Check className="w-3 h-3 text-white dark:text-gray-900" strokeWidth={3} />
+                          </div>
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            {feature}
+                          </span>
+                        </div>
+                      ))}
+
+                      {/* Limitations */}
+                      {plan.limitations.length > 0 && (
+                        <>
+                          <div className="pt-3">
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                              Limitations
+                            </p>
+                            {plan.limitations.map((limitation, i) => (
+                              <div key={i} className="flex items-start gap-3 mb-2">
+                                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center mt-0.5">
+                                  <X className="w-3 h-3 text-gray-500" strokeWidth={3} />
+                                </div>
+                                <span className="text-sm text-gray-500 dark:text-gray-500">
+                                  {limitation}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            );
+          })}
         </div>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 xl:gap-12 w-full max-w-[1400px] mx-auto">
-        {/* Free Plan */}
-        <div className="relative group">
-          <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-10 transition-all duration-300 hover:shadow-2xl">
-            {!isSubscribed && (
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
-                ✓ Current Plan
+
+        {/* Trust Signals */}
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.8, duration: 0.6 }}
+        >
+          {[
+            { title: "Cancel Anytime", description: "No long-term commitment required" },
+            { title: "Secure Payment", description: "All transactions encrypted with Stripe" },
+            { title: "7-Day Free Trial", description: "Try premium features risk-free" }
+          ].map((item, i) => (
+            <div key={i} className="text-center p-6 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Check className="w-5 h-5 text-white" strokeWidth={3} />
               </div>
-            )}
-
-            <div className="text-center mb-8">
-              <h3 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">Free</h3>
-              <p className="text-base text-gray-500 dark:text-gray-400">Perfect for getting started</p>
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                {item.title}
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {item.description}
+              </p>
             </div>
-
-            <div className="text-center mb-8 py-6">
-              <div className="flex items-baseline justify-center">
-                <span className="text-6xl font-extrabold text-gray-900 dark:text-gray-100">$0</span>
-                <span className="text-xl text-gray-600 dark:text-gray-400 ml-2">/month</span>
-              </div>
-            </div>
-
-            <Button
-              disabled
-              className="w-full mb-8 bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-600 dark:text-gray-400 text-lg py-6 rounded-xl hover:bg-gray-200 font-semibold"
-            >
-              Current Plan
-            </Button>
-
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
-              <ul className="space-y-4">
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">3 quiz uploads</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">Basic quiz generation</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">Join classes as student</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">Standard support</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Premium Plan - Student */}
-        <div className="relative group">
-          <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-xl border-2 border-blue-600 dark:border-blue-500 p-10 transition-all duration-300 hover:shadow-2xl">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-8 py-2 rounded-full text-sm font-bold shadow-lg">
-              Most Popular
-            </div>
-
-            {isSubscribed && userRole === "STUDENT" && (
-              <div className="absolute -top-4 right-6 bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
-                ✓ Current Plan
-              </div>
-            )}
-
-            <div className="text-center mb-8">
-              <h3 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">Premium Student</h3>
-              <p className="text-base text-gray-500 dark:text-gray-400">Best for students</p>
-            </div>
-
-            <div className="text-center mb-8 py-6">
-              <div className="flex items-baseline justify-center">
-                <span className="text-6xl font-extrabold text-gray-900 dark:text-gray-100">$4.99</span>
-                <span className="text-xl text-gray-600 dark:text-gray-400 ml-2">/month</span>
-              </div>
-            </div>
-
-            {userRole === "STUDENT" ? (
-              isSubscribed ? (
-                <Button disabled className="w-full mb-8 bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-600 dark:text-gray-400 text-lg py-6 rounded-xl hover:bg-gray-200 font-semibold">
-                  Current Plan
-                </Button>
-              ) : (
-                <Button onClick={handleUpgradeStudent} className="w-full mb-8 bg-blue-600 hover:bg-blue-700 text-white text-lg py-6 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
-                  Switch to Premium
-                </Button>
-              )
-            ) : (
-              <Button disabled className="w-full mb-8 bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-600 dark:text-gray-400 text-lg py-6 rounded-xl hover:bg-gray-200 font-semibold">
-                For Students Only
-              </Button>
-            )}
-
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
-              <ul className="space-y-4">
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base"><strong>Unlimited quizzes</strong></span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">Advanced AI quiz generation</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">Misconception tracking</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">Spaced repetition learning</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">Priority support</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Education Plan - Teacher */}
-        <div className="relative group">
-          <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-10 transition-all duration-300 hover:shadow-2xl">
-            {isSubscribed && userRole === "TEACHER" && (
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg">
-                ✓ Current Plan
-              </div>
-            )}
-
-            <div className="text-center mb-8">
-              <h3 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">Education</h3>
-              <p className="text-base text-gray-500 dark:text-gray-400">Special pricing for educators</p>
-            </div>
-
-            <div className="text-center mb-8 py-6">
-              <div className="flex items-baseline justify-center">
-                <span className="text-6xl font-extrabold text-gray-900 dark:text-gray-100">$9.99</span>
-                <span className="text-xl text-gray-600 dark:text-gray-400 ml-2">/month</span>
-              </div>
-            </div>
-
-            {userRole === "TEACHER" ? (
-              isSubscribed ? (
-                <Button disabled className="w-full mb-8 bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-600 dark:text-gray-400 text-lg py-6 rounded-xl hover:bg-gray-200 font-semibold">
-                  Current Plan
-                </Button>
-              ) : (
-                <Button onClick={handleUpgradeTeacher} className="w-full mb-8 bg-blue-600 hover:bg-blue-700 text-white text-lg py-6 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
-                  Switch to Education
-                </Button>
-              )
-            ) : (
-              <Button disabled className="w-full mb-8 bg-gray-200 dark:bg-gray-700 cursor-not-allowed text-gray-600 dark:text-gray-400 text-lg py-6 rounded-xl hover:bg-gray-200 font-semibold">
-                For Teachers Only
-              </Button>
-            )}
-
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
-              <ul className="space-y-4">
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">Create unlimited classes</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">Assign quizzes to students</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">Class-wide analytics</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <Check className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700 dark:text-gray-300 text-base">Track student progress</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+          ))}
+        </motion.div>
       </div>
     </div>
   );
 };
 
-export default PricingTable; 
+export default PricingTable;

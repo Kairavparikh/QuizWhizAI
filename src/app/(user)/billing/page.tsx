@@ -21,14 +21,18 @@ const page = async () => {
     const plan = user?.subscribed ? 'premium' : 'free';
 
     return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 py-16">
-        <PricingTable isSubscribed={!!user?.subscribed} />
-
+    <div className="w-full min-h-screen bg-white dark:bg-gray-950">
+        {/* Manage Subscription Banner - Only show if subscribed */}
         {user?.subscribed && (
-            <div className="flex justify-center mt-16">
-                <ManageSubscription/>
+            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 border-b border-gray-200 dark:border-gray-800 shadow-lg">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <ManageSubscription />
+                </div>
             </div>
         )}
+
+        {/* Pricing Table */}
+        <PricingTable isSubscribed={!!user?.subscribed} />
     </div>
     )
 }

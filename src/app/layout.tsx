@@ -1,13 +1,25 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Outfit } from 'next/font/google'
 import './globals.css'
 import { SessionProvider } from 'next-auth/react'
 import Header from '@/components/ui/header'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
-import { Toaster } from '@/components/ui/toaster' 
+import { Toaster } from '@/components/ui/toaster'
+import { SidebarProvider } from '@/components/SidebarProvider'
+import { LayoutWrapper } from '@/components/LayoutWrapper'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'QuizWhizAI',
@@ -20,19 +32,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body className={'dark'}>
         <SessionProvider>
-          <Header />
-          <div style={{ textAlign: 'center', margin: '1rem 0', color: 'white' }}>
-            <p>
-              🚀 Helping students with over <strong>{50}</strong> quizzes and <strong>{400}</strong> + questions answered!
-            </p>
-          </div>
-          {children}
-          <Toaster />
-          <Analytics />
-          <SpeedInsights />
+          <SidebarProvider>
+            <Header />
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+            <Toaster />
+            <Analytics />
+            <SpeedInsights />
+          </SidebarProvider>
         </SessionProvider>
       </body>
     </html>

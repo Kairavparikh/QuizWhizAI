@@ -300,6 +300,12 @@ export const misconceptions = pgTable("misconceptions", {
   strength: integer("strength").notNull().default(5), // 1-10, how strong this misconception is
   occurrenceCount: integer("occurrence_count").notNull().default(1), // How many times detected
   correctStreakCount: integer("correct_streak_count").notNull().default(0), // Correct answers in a row
+  
+  // New robustness fields
+  hierarchyLevel: text("hierarchy_level"), // e.g., "domain", "topic", "subtopic"
+  rootCauseId: integer("root_cause_id"), // Self-reference to a root cause misconception
+  learningResources: text("learning_resources"), // JSON string of recommended resources
+
   detectedAt: timestamp("detected_at").defaultNow().notNull(),
   resolvedAt: timestamp("resolved_at"),
   lastTestedAt: timestamp("last_tested_at"),
@@ -314,6 +320,14 @@ export const misconceptionsRelations = relations(misconceptions, ({ one, many })
   folder: one(folders, {
     fields: [misconceptions.folderId],
     references: [folders.id],
+  }),
+  rootCause: one(misconceptions, {
+    fields: [misconceptions.rootCauseId],
+    references: [misconceptions.id],
+    relationName: "rootCauseRelation"
+  }),
+  childMisconceptions: many(misconceptions, {
+    relationName: "rootCauseRelation"
   }),
   questionMisconceptions: many(questionMisconceptions),
   misconceptionRelationships1: many(misconceptionRelationships, {

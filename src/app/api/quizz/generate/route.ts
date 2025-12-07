@@ -4,6 +4,7 @@ import {ChatOpenAI} from "@langchain/openai"
 import {HumanMessage} from "@langchain/core/messages";
 
 import {PDFLoader} from "langchain/document_loaders/fs/pdf"
+import {TextLoader} from "langchain/document_loaders/fs/text"
 import{JsonOutputFunctionsParser} from "langchain/output_parsers"
 
 import saveQuizz from "./saveToDb";
@@ -12,23 +13,33 @@ import {auth} from "@/auth";
 export async function POST(req: NextRequest){
     const session = await auth();
     const userId = session?.user?.id;
-    
+
     if (!userId) {
         return NextResponse.json({ error: "User not authenticated"}, {status: 401});
     }
 
     const body = await req.formData();
-    const document = body.get("pdf");
+    const document = body.get("pdf") as File;
     const folderIdStr = body.get("folderId");
     const folderId = folderIdStr ? parseInt(folderIdStr as string) : null;
-    try{
-        const pdfLoader = new PDFLoader(document as Blob, {
-            parsedItemSeparator: " "
-        });
-        const docs = await pdfLoader.load();
 
-        const selectedDocuments = docs.filter((doc) => doc.pageContent !== undefined);
-        const texts = selectedDocuments.map((doc) => doc.pageContent);
+    try{
+        let texts: string[] = [];
+
+        // Check file type and use appropriate loader
+        if (document.type === "text/plain" || document.name.endsWith(".txt")) {
+            // Handle TXT files
+            const textContent = await document.text();
+            texts = [textContent];
+        } else {
+            // Handle PDF files
+            const pdfLoader = new PDFLoader(document as Blob, {
+                parsedItemSeparator: " "
+            });
+            const docs = await pdfLoader.load();
+            const selectedDocuments = docs.filter((doc) => doc.pageContent !== undefined);
+            texts = selectedDocuments.map((doc) => doc.pageContent);
+        }
 
         const prompt = `Analyze the provided document text carefully. Your task is to create a quiz following these rules:
 

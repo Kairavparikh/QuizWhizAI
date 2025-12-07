@@ -39,7 +39,7 @@ export const {
       if (user && session?.user) {
         session.user.id = user.id;
 
-        // Fetch the user's role from the database
+        // Fetch the user's role and subscription status from the database
         if (user.id) {
           const dbUser = await db.query.users.findFirst({
             where: eq(users.id, user.id),
@@ -47,6 +47,7 @@ export const {
 
           if (dbUser) {
             (session.user as any).role = dbUser.role;
+            (session.user as any).subscribed = dbUser.subscribed;
           }
         }
       }

@@ -20,20 +20,16 @@ const Page = async () => {
   const userRole = (session?.user as any)?.role;
   const isStudent = userRole === "STUDENT";
 
-  // Students always have access to the choice screen (for joining classes and taking notes)
+  // Check subscription status for all users
+  const isSubscribed: boolean | undefined | null = await getUserSubscriptions({ userId });
+
+  // Students can access with or without subscription (limited features)
   // Teachers need subscription or free trials
   if (isStudent) {
-    return (
-      <div className="flex flex-col flex-1">
-        <main className="py-11 flex flex-col gap-4 flex-1 mt-24">
-          <ChoiceScreen />
-        </main>
-      </div>
-    );
+    return <ChoiceScreen isSubscribed={isSubscribed || false} />;
   }
 
-  // For teachers, check subscription status
-  const isSubscribed: boolean | undefined | null = await getUserSubscriptions({ userId });
+  // For teachers, check subscription status and free trials
   const freeTrialData = await checkFreeTrials();
 
   const onNaviagteToUpgrate = async (price:string) => {
@@ -56,26 +52,24 @@ const Page = async () => {
 }
 
   return (
-    <div className="flex flex-col flex-1">
-      <main className="py-11 flex flex-col gap-4 flex-1 mt-24">
-        {isSubscribed ? (
-        <>
-        <ChoiceScreen />
-        </>
-        ) : freeTrialData.canUpload ? (
-        <>
-        <div className="text-center mb-4 text-sm text-gray-600">
-          Free trials remaining: {freeTrialData.trialsRemaining} of {freeTrialData.limit}
-        </div>
-        <ChoiceScreen />
-        </>
-        ) : (
-          <div className="flex justify-center">
-            <UpgradePlan/>
+    <>
+      {isSubscribed ? (
+        <ChoiceScreen isSubscribed={true} />
+      ) : freeTrialData.canUpload ? (
+        <div className="w-full">
+          <div className="text-center mb-8 py-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-xl border border-blue-200 dark:border-blue-800 mx-auto max-w-md">
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              Free trials remaining: <span className="text-blue-600 dark:text-blue-400 font-bold">{freeTrialData.trialsRemaining}</span> of {freeTrialData.limit}
+            </p>
           </div>
-        )}
-      </main>
-    </div>
+          <ChoiceScreen isSubscribed={false} />
+        </div>
+      ) : (
+        <div className="flex justify-center py-12">
+          <UpgradePlan />
+        </div>
+      )}
+    </>
   );
 };
 

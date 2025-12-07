@@ -15,56 +15,43 @@ const Page = async () => {
   const userRole = (session?.user as any)?.role;
   const isStudent = userRole === "STUDENT";
 
-  // Students always have access to take notes
-  // Teachers need subscription or free trials
-  if (isStudent) {
+  // Check subscription status for all users
+  const isSubscribed: boolean | undefined | null = await getUserSubscriptions({ userId });
+  const freeTrialData = await checkFreeTrials();
+
+  // Only subscribed students or teachers with trials can access notes
+  if (isStudent && !isSubscribed) {
     return (
       <div className="flex flex-col flex-1">
         <main className="py-11 flex flex-col text-center gap-4 items-center flex-1 mt-24">
-          <h2 className="text-3xl font-bold mb-4">
-            Record Your Study Notes
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Speak naturally and we&apos;ll transcribe your notes in real-time
-          </p>
-          <NotesRecorder />
+          <UpgradePlan />
         </main>
       </div>
     );
   }
 
-  // For teachers, check subscription status
-  const isSubscribed: boolean | undefined | null = await getUserSubscriptions({ userId });
-  const freeTrialData = await checkFreeTrials();
-
   return (
     <div className="flex flex-col flex-1">
       <main className="py-11 flex flex-col text-center gap-4 items-center flex-1 mt-24">
-        {isSubscribed ? (
-        <>
-        <h2 className="text-3xl font-bold mb-4">
-          Record Your Study Notes
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Speak naturally and we&apos;ll transcribe your notes in real-time
-        </p>
-        <NotesRecorder />
-        </>
-        ) : freeTrialData.canUpload ? (
-        <>
-        <h2 className="text-3xl font-bold mb-4">
-          Record Your Study Notes
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-2">
-          Speak naturally and we&apos;ll transcribe your notes in real-time
-        </p>
-        <div className="mb-4 text-sm text-gray-600">
-          Free trials remaining: {freeTrialData.trialsRemaining} of {freeTrialData.limit}
-        </div>
-        <NotesRecorder />
-        </>
+        {isSubscribed || freeTrialData.canUpload ? (
+          <>
+            <h2 className="text-3xl font-bold mb-4">
+              Record Your Study Notes
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
+              Speak naturally and we&apos;ll transcribe your notes in real-time
+            </p>
+            {!isSubscribed && freeTrialData.canUpload && (
+              <div className="mb-4 py-2 px-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Free trials remaining: <span className="text-blue-600 dark:text-blue-400 font-bold">{freeTrialData.trialsRemaining}</span> of {freeTrialData.limit}
+                </p>
+              </div>
+            )}
+            <NotesRecorder />
+          </>
         ) : (
-          <UpgradePlan/>
+          <UpgradePlan />
         )}
       </main>
     </div>

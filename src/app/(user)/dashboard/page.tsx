@@ -10,6 +10,7 @@ import MetricCard from "./metricCard";
 import SubmissionsHeatMap from "./heatMap";
 import { Button } from "@/components/ui/button";
 import type { Quiz } from "./QuizCard";
+import DashboardContent from "./DashboardContent";
 
 
 const page = async () => {
@@ -55,50 +56,13 @@ const page = async () => {
 
   const userData = await getUserMetrics();
   const heatMapData = await getHeatMapData();
-  console.log(heatMapData);
+
   return (
-    <div className="space-y-8 pb-12">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {userData && userData.length > 0 &&
-          userData.map((metric) => (
-            <MetricCard key={metric.label} label={metric.label} value={metric.value} />
-          ))
-        }
-      </div>
-
-      {/* Heatmap */}
-      {heatMapData && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Activity Overview
-          </h2>
-          <SubmissionsHeatMap data={heatMapData.data} />
-        </div>
-      )}
-
-      {/* Quizzes Grid */}
-      <QuizzesGrid quizzes={enrichedQuizzes} />
-
-      {/* Database maintenance section - More subtle */}
-      <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Don&apos;t see your Quiz?
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Click below to refresh and sync your quizzes
-            </p>
-          </div>
-          <form action={updateExistingQuizzes}>
-            <Button type="submit" variant="outline" size="lg">
-              Refresh Quizzes
-            </Button>
-          </form>
-        </div>
-      </div>
-    </div>
+    <DashboardContent
+      userData={userData}
+      heatMapData={heatMapData}
+      enrichedQuizzes={enrichedQuizzes}
+    />
   );
 };
 

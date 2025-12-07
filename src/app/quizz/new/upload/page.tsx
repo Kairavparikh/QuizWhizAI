@@ -1,4 +1,4 @@
-import UploadDoc from "../../uploadDoc";
+import UploadDocModern from "../../uploadDocModern";
 import { auth, signIn } from "@/auth";
 import { getUserSubscriptions } from "@/app/actions/userSubscriptions";
 import { checkFreeTrials } from "@/app/actions/checkFreeTrials";
@@ -16,24 +16,20 @@ const Page = async () => {
   const freeTrialData = await checkFreeTrials();
 
   return (
-    <div className="flex flex-col flex-1">
-      <main className="py-11 flex flex-col text-center gap-4 items-center flex-1 mt-24">
+    <div className="flex flex-col flex-1 min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <main className="py-16 flex flex-col items-center flex-1 px-4">
         {isSubscribed ? (
-        <>
-        <h2 className="text-3xl font-bold mb-4">
-          What do you want to be quizzed about today?
-        </h2>
-        <UploadDoc />
-        </>
+          <UploadDocModern />
         ) : freeTrialData.canUpload ? (
         <>
-        <h2 className="text-3xl font-bold mb-4">
-          What do you want to be quizzed about today?
-        </h2>
-        <div className="mb-4 text-sm text-gray-600">
-          Free trials remaining: {freeTrialData.trialsRemaining} of {freeTrialData.limit}
-        </div>
-        <UploadDoc />
+          <div className="mb-8 text-center">
+            <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 px-4 py-2 rounded-full mb-4">
+              <span className="text-sm font-semibold text-blue-900 dark:text-blue-300">
+                Free trials remaining: {freeTrialData.trialsRemaining} of {freeTrialData.limit}
+              </span>
+            </div>
+          </div>
+          <UploadDocModern />
         </>
         ) : (
           <UpgradePlan/>
