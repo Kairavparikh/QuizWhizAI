@@ -200,33 +200,35 @@ export default function SmartReviewInterface({
                     </div>
 
                     {/* Sidebar - Takes 1/3 on large screens */}
-                    <div className="space-y-6">
-                        {/* Learning Categories */}
+                    <div className="space-y-3">
+                        {/* Learning Categories - Only show categories with items */}
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
+                            className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700"
                         >
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
+                            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">
                                 Your Learning
                             </h3>
 
-                            <div className="space-y-3">
-                                {/* Review First */}
-                                <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 border-2 border-red-200 dark:border-red-700">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                                        <h4 className="font-bold text-red-800 dark:text-red-300">Review First</h4>
-                                    </div>
-                                    <p className="text-sm text-red-700 dark:text-red-400 mb-2">
-                                        High-confidence wrong answers
-                                    </p>
-                                    <div className="text-2xl font-bold text-red-800 dark:text-red-300">
-                                        {reviewFirst.length}
-                                    </div>
-                                    {reviewFirst.length > 0 && (
-                                        <div className="mt-3 space-y-1 max-h-32 overflow-y-auto">
+                            <div className="space-y-2">
+                                {/* Review First - Only show if has items */}
+                                {reviewFirst.length > 0 && (
+                                    <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-700">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                                <h4 className="font-bold text-sm text-red-800 dark:text-red-300">Review First</h4>
+                                            </div>
+                                            <div className="text-lg font-bold text-red-800 dark:text-red-300">
+                                                {reviewFirst.length}
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-red-700 dark:text-red-400 mb-2">
+                                            High-confidence wrong answers
+                                        </p>
+                                        <div className="mt-2 space-y-1 max-h-24 overflow-y-auto">
                                             {reviewFirst.slice(0, 3).map((ans, idx) => (
                                                 <button
                                                     key={idx}
@@ -242,36 +244,44 @@ export default function SmartReviewInterface({
                                                 </button>
                                             ))}
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
 
-                                {/* Know But Doubt */}
-                                <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 border-2 border-yellow-200 dark:border-yellow-700">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <HelpCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                                        <h4 className="font-bold text-yellow-800 dark:text-yellow-300">Know But Doubt</h4>
+                                {/* Know But Doubt - Only show if has items */}
+                                {knowButDoubt.length > 0 && (
+                                    <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 border border-yellow-200 dark:border-yellow-700">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <div className="flex items-center gap-2">
+                                                <HelpCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                                                <h4 className="font-bold text-sm text-yellow-800 dark:text-yellow-300">Know But Doubt</h4>
+                                            </div>
+                                            <div className="text-lg font-bold text-yellow-800 dark:text-yellow-300">
+                                                {knowButDoubt.length}
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-yellow-700 dark:text-yellow-400">
+                                            Correct but low confidence
+                                        </p>
                                     </div>
-                                    <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-2">
-                                        Low/medium confidence right answers
-                                    </p>
-                                    <div className="text-2xl font-bold text-yellow-800 dark:text-yellow-300">
-                                        {knowButDoubt.length}
-                                    </div>
-                                </div>
+                                )}
 
-                                {/* Mastered */}
-                                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border-2 border-green-200 dark:border-green-700">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
-                                        <h4 className="font-bold text-green-800 dark:text-green-300">Mastered</h4>
+                                {/* Mastered - Only show if has items */}
+                                {mastered.length > 0 && (
+                                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border border-green-200 dark:border-green-700">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <div className="flex items-center gap-2">
+                                                <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                                <h4 className="font-bold text-sm text-green-800 dark:text-green-300">Mastered</h4>
+                                            </div>
+                                            <div className="text-lg font-bold text-green-800 dark:text-green-300">
+                                                {mastered.length}
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-green-700 dark:text-green-400">
+                                            High confidence correct
+                                        </p>
                                     </div>
-                                    <p className="text-sm text-green-700 dark:text-green-400 mb-2">
-                                        High confidence right answers
-                                    </p>
-                                    <div className="text-2xl font-bold text-green-800 dark:text-green-300">
-                                        {mastered.length}
-                                    </div>
-                                </div>
+                                )}
                             </div>
                         </motion.div>
 
@@ -280,14 +290,14 @@ export default function SmartReviewInterface({
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-700 shadow-lg"
+                            className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-700 shadow-lg"
                         >
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
-                                    <Sparkles className="w-6 h-6 text-white" />
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <Sparkles className="w-4 h-4 text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">
+                                    <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100">
                                         Adaptive Practice
                                     </h3>
                                     <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -295,24 +305,21 @@ export default function SmartReviewInterface({
                                     </p>
                                 </div>
                             </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                Generate a personalized quiz based on your detected misconceptions
-                            </p>
                             <Button
                                 onClick={handleGenerateAdaptiveQuiz}
                                 disabled={generatingAdaptiveQuiz}
-                                size="lg"
+                                size="sm"
                                 className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg"
                             >
                                 {generatingAdaptiveQuiz ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                        Generating...
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                        <span className="text-xs">Generating...</span>
                                     </>
                                 ) : (
                                     <>
-                                        <Sparkles className="w-4 h-4 mr-2" />
-                                        Generate Quiz
+                                        <Sparkles className="w-3 h-3 mr-2" />
+                                        <span className="text-xs">Generate Quiz</span>
                                     </>
                                 )}
                             </Button>
@@ -324,18 +331,18 @@ export default function SmartReviewInterface({
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.3 }}
                             href={`/dashboard/misconceptions${quizzId ? `?returnTo=${quizzId}` : ''}`}
-                            className="block bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all group"
+                            className="block bg-white dark:bg-gray-800 rounded-xl p-3 shadow-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all group"
                         >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                        View Full Misconception Profile
+                                    <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                        View Full Profile
                                     </h4>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        Deep dive into your learning patterns
+                                        Dive into learning patterns
                                     </p>
                                 </div>
-                                <TrendingUp className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                                <TrendingUp className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
                             </div>
                         </motion.a>
 
@@ -345,31 +352,31 @@ export default function SmartReviewInterface({
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.4 }}
-                                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
+                                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700"
                             >
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-3">
                                     Questions to Review ({wrongAnswers.length})
                                 </h3>
-                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
                                     {wrongAnswers.map((wrongAnswer, index) => (
                                         <button
                                             key={index}
                                             onClick={() => setSelectedQuestionIndex(index)}
-                                            className={`w-full text-left p-3 rounded-lg border transition-all ${
+                                            className={`w-full text-left p-2 rounded-lg border transition-all ${
                                                 selectedQuestionIndex === index
                                                     ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                                                     : "border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700"
                                             }`}
                                         >
-                                            <div className="flex items-start gap-3">
-                                                <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                                            <div className="flex items-start gap-2">
+                                                <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
                                                     selectedQuestionIndex === index
                                                         ? "bg-blue-500 text-white"
                                                         : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
                                                 }`}>
                                                     {index + 1}
                                                 </div>
-                                                <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 flex-1">
+                                                <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2 flex-1">
                                                     {wrongAnswer.questionText}
                                                 </p>
                                             </div>

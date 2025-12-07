@@ -639,6 +639,49 @@ export default function MisconceptionsPage() {
         message={alertMessage}
         variant="error"
       />
+
+      {/* Status Explanation - Bottom Info */}
+      <div className="mt-12 mb-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700 p-6">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+          <Brain className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          How We Track Your Progress
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-red-700 dark:text-red-300 mb-1">Needs Focus (Active)</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                You answered incorrectly or showed uncertainty. These concepts need practice.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-blue-700 dark:text-blue-300 mb-1">In Progress (Resolving)</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                You've answered correctly once with high confidence. One more to master it!
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-green-700 dark:text-green-300 mb-1">Mastered (Resolved)</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                You've demonstrated mastery with 2+ correct answers with high confidence. Great job!
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700">
+          <p className="text-xs text-gray-600 dark:text-gray-400">
+            <span className="font-semibold">Strength (1-10):</span> Indicates how deeply rooted the misconception is.
+            Increases when you get it wrong, decreases by 2 when you get it right with high confidence.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

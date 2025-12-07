@@ -174,6 +174,12 @@ Provide the misconception analysis in JSON format.`,
 
     if (existingMisconception) {
       // Update existing misconception
+      // STATUS DETERMINATION LOGIC:
+      // - Wrong answer → "active" (Needs Focus) and reset correct streak
+      // - Correct answer:
+      //   * correctStreakCount >= 1 → "resolved" (Mastered) - only need 2 total correct
+      //   * correctStreakCount < 1 → "resolving" (In Progress)
+      // STRENGTH: Increases by 1 each wrong answer (max 10), represents difficulty
       const [updated] = await db
         .update(misconceptions)
         .set({
@@ -182,10 +188,10 @@ Provide the misconception analysis in JSON format.`,
           lastTestedAt: new Date(),
           correctStreakCount: isCorrect ? sql`${misconceptions.correctStreakCount} + 1` : 0,
           status: isCorrect
-            ? sql`CASE WHEN ${misconceptions.correctStreakCount} >= 2 THEN 'resolved'::misconception_status ELSE 'resolving'::misconception_status END`
+            ? sql`CASE WHEN ${misconceptions.correctStreakCount} >= 1 THEN 'resolved'::misconception_status ELSE 'resolving'::misconception_status END`
             : "active",
           resolvedAt: isCorrect
-            ? sql`CASE WHEN ${misconceptions.correctStreakCount} >= 2 THEN NOW() ELSE NULL END`
+            ? sql`CASE WHEN ${misconceptions.correctStreakCount} >= 1 THEN NOW() ELSE NULL END`
             : null,
         })
         .where(eq(misconceptions.id, existingMisconception.id))
@@ -194,6 +200,10 @@ Provide the misconception analysis in JSON format.`,
       misconceptionId = updated.id;
     } else {
       // Create new misconception
+      // INITIAL STATUS:
+      // - Correct but low confidence → "resolving" (In Progress, needs one more to master)
+      // - Incorrect → "active" (Needs Focus)
+      // INITIAL STRENGTH: 5 (medium difficulty baseline)
       const [newMisconception] = await db
         .insert(misconceptions)
         .values({
@@ -203,15 +213,13 @@ Provide the misconception analysis in JSON format.`,
           misconceptionType: analysis.misconceptionType,
           description: analysis.description,
           status: isCorrect ? "resolving" : "active",
-          strength: 5,
+          strength: 5, // Baseline difficulty
           occurrenceCount: 1,
           correctStreakCount: isCorrect ? 1 : 0,
           lastTestedAt: new Date(),
-          resolvedAt: isCorrect && confidence === "low" ? null : null,
+          resolvedAt: null,
           hierarchyLevel: analysis.hierarchyLevel,
           learningResources: JSON.stringify(analysis.learningResources),
-          // Note: rootCauseId would typically be linked in a separate pass or if the AI identifies an existing ID, 
-          // but for now we'll leave it null as linking to existing IDs requires more complex logic
         })
         .returning();
 

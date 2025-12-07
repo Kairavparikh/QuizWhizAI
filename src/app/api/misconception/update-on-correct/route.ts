@@ -49,14 +49,17 @@ export async function POST(req: NextRequest) {
             }
 
             const newCorrectStreak = misconception.correctStreakCount + 1;
-            const newStrength = Math.max(1, misconception.strength - 1); // Decrease strength, min 1
+            const newStrength = Math.max(1, misconception.strength - 2); // Decrease strength faster, min 1
 
-            // Determine new status based on correct streak
+            // STATUS DETERMINATION (High-Confidence Correct Answers):
+            // - 2+ consecutive correct → "resolved" (Mastered)
+            // - 1 consecutive correct → "resolving" (In Progress)
+            // STRENGTH: Decreases by 2 per high-confidence correct answer (min 1)
             let newStatus = misconception.status;
-            if (newCorrectStreak >= 5) {
-                newStatus = "resolved";
-            } else if (newCorrectStreak >= 3) {
-                newStatus = "resolving";
+            if (newCorrectStreak >= 2) {
+                newStatus = "resolved"; // Mastered: Shows understanding
+            } else if (newCorrectStreak >= 1) {
+                newStatus = "resolving"; // In Progress: Showing improvement
             }
 
             const updateData: any = {

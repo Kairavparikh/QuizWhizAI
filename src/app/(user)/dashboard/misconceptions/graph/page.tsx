@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useState, useEffect, useCallback } from "react";
 import KnowledgeGalaxy from "@/components/misconceptions/KnowledgeGalaxy";
 import { Button } from "@/components/ui/button";
 import { Brain, ArrowLeft, Sparkles, AlertCircle, TrendingUp, CheckCircle, Trash2 } from "lucide-react";
@@ -188,10 +187,45 @@ export default function MisconceptionGraphPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Brain className="w-16 h-16 mx-auto mb-4 animate-pulse text-blue-600" />
-          <p className="text-lg text-gray-600 dark:text-gray-400">Loading learning path...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/20">
+        <div className="relative">
+          {/* Animated background circles */}
+          <div className="absolute -inset-20 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse" />
+
+          {/* Main content */}
+          <div className="relative flex flex-col items-center gap-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl p-12 shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
+            {/* Animated icon */}
+            <div className="relative">
+              <Brain className="w-20 h-20 text-blue-600 dark:text-blue-400 animate-pulse" />
+              <div className="absolute inset-0 animate-ping">
+                <div className="w-full h-full rounded-full bg-blue-400/30" />
+              </div>
+            </div>
+
+            {/* Animated text */}
+            <div className="text-center">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 animate-pulse">
+                Loading Learning Path
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">Analyzing your misconceptions...</p>
+            </div>
+
+            {/* Animated dots */}
+            <div className="flex gap-2">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 animate-bounce"
+                  style={{ animationDelay: `${i * 0.2}s` }}
+                />
+              ))}
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-64 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 animate-pulse" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -219,9 +253,9 @@ export default function MisconceptionGraphPage() {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden fixed inset-0">
+    <div className="h-screen w-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden fixed inset-0 pt-16">
       {/* Compact Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 z-10 flex-shrink-0">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 z-10 flex-shrink-0 mt-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
@@ -284,7 +318,7 @@ export default function MisconceptionGraphPage() {
       </div>
 
       {/* Full Screen Flow Chart */}
-      <div className="flex-1 w-full h-full">
+      <div className="flex-1 w-full h-full pb-10">
         <KnowledgeGalaxy
           data={graphData || { nodes: [], edges: [] }}
           onNodeClick={handleNodeClick}
@@ -293,7 +327,7 @@ export default function MisconceptionGraphPage() {
 
       {/* Side Panel */}
       {selectedNode && (
-        <div className="fixed top-20 right-4 w-96 bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-6 shadow-2xl z-20">
+        <div className="fixed top-24 right-4 w-96 bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-6 shadow-2xl z-20 max-h-[calc(100vh-7rem)] overflow-y-auto">
           <div className="flex items-start justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {selectedNode.label}
@@ -457,6 +491,18 @@ export default function MisconceptionGraphPage() {
         message={errorMessage}
         variant="error"
       />
+
+      {/* Status Explanation - Bottom Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700 px-6 py-2 z-20">
+        <div className="max-w-7xl mx-auto">
+          <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
+            <span className="font-semibold">How Status Works:</span>{" "}
+            <span className="text-orange-600 dark:text-orange-400 font-medium">Needs Focus</span> = Wrong answers or new mistakes • {" "}
+            <span className="text-blue-600 dark:text-blue-400 font-medium">In Progress</span> = 1 correct answer with high confidence • {" "}
+            <span className="text-green-600 dark:text-green-400 font-medium">Mastered</span> = 2+ correct answers in a row with high confidence
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

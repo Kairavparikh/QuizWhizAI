@@ -2,7 +2,7 @@
 import{useState, useMemo, useEffect} from "react";
 import {Button} from "@/components/ui/button";
 import ProgressBar from "@/components/ui/progressBar";
-import {ChevronLeft, X, Clock} from "lucide-react"
+import {ChevronLeft, X, Clock, Lightbulb, CheckCircle, Info, Sparkles} from "lucide-react"
 import ResultCard from "./ResultCard"
 import QuizzSubmission from "./QuizzSubmission"
 import ConfidenceSelector from "./ConfidenceSelector"
@@ -15,6 +15,7 @@ import { saveSubmission } from "../actions/saveSubmission";
 import { saveAllQuestionResponses } from "../actions/saveQuestionResponse";
 import { shuffleArray } from "@/lib/utils";
 import { type ConfidenceLevel } from "@/lib/confidenceMapping";
+import { motion, AnimatePresence } from "framer-motion";
 
 
 
@@ -42,6 +43,7 @@ export default function QuizzQuestions(props: Props ){
     }, [questions]);
 
     const[started, setStarted]  = useState(false);
+    const[starting, setStarting] = useState(false); // New loading state for quiz start transition
     const[currentQuestion, setCurrentQuestion] = useState<number>(0);
     const [score, setScore] = useState<number>(0);
     const[userAnswers, setUserAnswers] = useState<{questionId:number, answerId:number, confidence: ConfidenceLevel | null}[]>([]);
@@ -85,10 +87,15 @@ export default function QuizzQuestions(props: Props ){
 
     const handleNext = () => {
         if(!started){
-            setStarted(true);
-            setTimeLeftInSeconds(timerMinutes * 60); // Set timer when starting
-            setTimerActive(true); // Activate timer
-            setQuizStartTime(Date.now()); // Track start time
+            setStarting(true); // Show loading transition
+            // Simulate loading delay for smooth transition
+            setTimeout(() => {
+                setStarted(true);
+                setStarting(false);
+                setTimeLeftInSeconds(timerMinutes * 60); // Set timer when starting
+                setTimerActive(true); // Activate timer
+                setQuizStartTime(Date.now()); // Track start time
+            }, 2000); // 2 second loading transition
             return;
         }
 
@@ -283,6 +290,49 @@ export default function QuizzQuestions(props: Props ){
     // Calculate time spent
     const timeSpentInSeconds = quizStartTime && quizEndTime ? Math.floor((quizEndTime - quizStartTime) / 1000) : 0;
 
+    // Show loading screen while starting quiz
+    if (starting) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/20">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center space-y-6"
+                >
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    >
+                        <Sparkles className="w-24 h-24 mx-auto text-blue-600 dark:text-blue-400" />
+                    </motion.div>
+                    <motion.div
+                        animate={{ opacity: [1, 0.5, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            Preparing Your Quiz...
+                        </h2>
+                        <p className="text-gray-600 dark:text-gray-400 mt-2">Get ready to test your knowledge!</p>
+                    </motion.div>
+                    <div className="flex gap-2 justify-center">
+                        {[0, 1, 2].map((i) => (
+                            <motion.div
+                                key={i}
+                                className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-600 to-purple-600"
+                                animate={{ y: [0, -20, 0] }}
+                                transition={{
+                                    duration: 0.8,
+                                    repeat: Infinity,
+                                    delay: i * 0.2,
+                                }}
+                            />
+                        ))}
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
+
     // Show loading screen while submitting
     if (submitting) {
         return (
@@ -333,41 +383,72 @@ export default function QuizzQuestions(props: Props ){
             </div>
           <main className="flex justify-center flex-1 items-center px-6">
             {!started ? (
-                <div className="max-w-2xl w-full space-y-6">
-                    <div className="text-center space-y-4">
-                        <div className="inline-block p-4 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
-                            <svg className="w-16 h-16 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                            </svg>
-                        </div>
-                        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="max-w-4xl w-full space-y-8"
+                >
+                    {/* Header Section */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.1 }}
+                        className="text-center space-y-4"
+                    >
+                        <motion.div
+                            animate={{
+                                rotate: [0, 10, -10, 10, 0],
+                                scale: [1, 1.1, 1]
+                            }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                repeatDelay: 3
+                            }}
+                            className="inline-block p-5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg"
+                        >
+                            <Lightbulb className="w-16 h-16 text-white" />
+                        </motion.div>
+                        <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                             {props.quizz.name || "Your Quiz"}
                         </h1>
                         {props.quizz.description && (
-                            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
+                            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
                                 {props.quizz.description}
                             </p>
                         )}
-                    </div>
+                    </motion.div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-6 rounded-xl border border-blue-200 dark:border-blue-800">
-                            <div className="flex flex-col items-center text-center gap-3">
-                                <div className="p-3 bg-blue-600 rounded-lg">
-                                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
+                    {/* Stats Cards */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="grid grid-cols-1 md:grid-cols-3 gap-6"
+                    >
+                        <motion.div
+                            whileHover={{ scale: 1.05, y: -5 }}
+                            className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-xl border-2 border-blue-400"
+                        >
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8" />
+                            <div className="relative flex flex-col items-center text-center gap-3">
+                                <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl">
+                                    <Info className="w-8 h-8 text-white" />
                                 </div>
                                 <div>
-                                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{questions.length}</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Questions</p>
+                                    <p className="text-5xl font-black text-white mb-1">{questions.length}</p>
+                                    <p className="text-sm font-medium text-blue-100">Questions</p>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-6 rounded-xl border border-purple-200 dark:border-purple-800">
-                            <div className="flex flex-col items-center text-center gap-3">
-                                <div className="p-3 bg-purple-600 rounded-lg">
+                        <motion.div
+                            whileHover={{ scale: 1.05, y: -5 }}
+                            className="relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl shadow-xl border-2 border-purple-400"
+                        >
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8" />
+                            <div className="relative flex flex-col items-center text-center gap-3">
+                                <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl">
                                     <Clock className="w-8 h-8 text-white" />
                                 </div>
                                 <div className="w-full">
@@ -377,45 +458,68 @@ export default function QuizzQuestions(props: Props ){
                                         max="120"
                                         value={timerMinutes}
                                         onChange={(e) => setTimerMinutes(Math.max(1, parseInt(e.target.value) || 5))}
-                                        className="w-16 text-3xl font-bold text-purple-600 dark:text-purple-400 bg-white dark:bg-gray-800 border-2 border-purple-300 dark:border-purple-600 rounded-lg px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 mx-auto"
+                                        className="w-20 text-5xl font-black text-white bg-white/20 backdrop-blur-sm border-2 border-white/40 rounded-xl px-2 py-1 text-center focus:outline-none focus:ring-4 focus:ring-white/50 mx-auto"
                                     />
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap mt-1">Minutes</p>
+                                    <p className="text-sm font-medium text-purple-100 mt-1">Minutes</p>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-6 rounded-xl border border-green-200 dark:border-green-800">
-                            <div className="flex flex-col items-center text-center gap-3">
-                                <div className="p-3 bg-green-600 rounded-lg">
-                                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
+                        <motion.div
+                            whileHover={{ scale: 1.05, y: -5 }}
+                            className="relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-xl border-2 border-green-400"
+                        >
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8" />
+                            <div className="relative flex flex-col items-center text-center gap-3">
+                                <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl">
+                                    <CheckCircle className="w-8 h-8 text-white" />
                                 </div>
                                 <div>
-                                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">4</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Choices Each</p>
+                                    <p className="text-5xl font-black text-white mb-1">4</p>
+                                    <p className="text-sm font-medium text-green-100">Choices Each</p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
 
-                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mt-6">
-                        <div className="flex gap-3">
-                            <svg className="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                    {/* Tips Section */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-2 border-orange-300 dark:border-orange-700 rounded-2xl p-6 shadow-lg"
+                    >
+                        <div className="flex gap-4">
+                            <div className="flex-shrink-0">
+                                <div className="p-3 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl">
+                                    <Sparkles className="w-7 h-7 text-white" />
+                                </div>
+                            </div>
                             <div>
-                                <p className="font-semibold text-amber-800 dark:text-amber-300">Tips for Success</p>
-                                <ul className="text-sm text-amber-700 dark:text-amber-400 mt-2 space-y-1">
-                                    <li>• Read each question carefully before answering</li>
-                                    <li>• Select your confidence level before choosing an answer</li>
-                                    <li>• You&apos;ll get personalized feedback based on your performance</li>
-                                    <li>• Watch the timer - quiz auto-submits when time runs out</li>
+                                <h3 className="text-xl font-bold text-orange-900 dark:text-orange-100 mb-3">Tips for Success</h3>
+                                <ul className="space-y-2">
+                                    {[
+                                        "Read each question carefully before answering",
+                                        "Select your confidence level before choosing an answer",
+                                        "You'll get personalized feedback based on your performance",
+                                        "Watch the timer - quiz auto-submits when time runs out"
+                                    ].map((tip, i) => (
+                                        <motion.li
+                                            key={i}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.4 + i * 0.1 }}
+                                            className="flex items-start gap-2 text-orange-800 dark:text-orange-200"
+                                        >
+                                            <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-orange-600 dark:text-orange-400" />
+                                            <span className="text-sm font-medium">{tip}</span>
+                                        </motion.li>
+                                    ))}
                                 </ul>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
             ) : (
                 <div className="w-full max-w-2xl space-y-6">
                     <h2 className = "text-3xl font-bold">{questionsWithShuffledAnswers[currentQuestion].questionText}</h2>
@@ -479,15 +583,35 @@ export default function QuizzQuestions(props: Props ){
                         >
                             Submit
                         </Button> :
-                        <Button
-                            size="lg"
-                            variant="neo"
-                            onClick={handleNext}
-                            disabled={started && !hasAnsweredCurrentQuestion}
-                            className="w-full"
-                        >
-                            {!started ? 'Start' : 'Next'}
-                        </Button>
+                        !started ? (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5 }}
+                            >
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={handleNext}
+                                    className="w-full py-4 text-xl font-bold text-white bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300"
+                                >
+                                    <span className="flex items-center justify-center gap-2">
+                                        Start Quiz
+                                        <Sparkles className="w-6 h-6" />
+                                    </span>
+                                </motion.button>
+                            </motion.div>
+                        ) : (
+                            <Button
+                                size="lg"
+                                variant="neo"
+                                onClick={handleNext}
+                                disabled={started && !hasAnsweredCurrentQuestion}
+                                className="w-full"
+                            >
+                                Next
+                            </Button>
+                        )
                 }
             </div>
           </footer>

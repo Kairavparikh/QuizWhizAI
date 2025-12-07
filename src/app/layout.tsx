@@ -8,6 +8,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Toaster } from '@/components/ui/toaster'
 import { SidebarProvider } from '@/components/SidebarProvider'
 import { LayoutWrapper } from '@/components/LayoutWrapper'
+import { ThemeProvider } from '@/components/ThemeProvider'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,19 +33,21 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
-      <body className={'dark'}>
-        <SessionProvider>
-          <SidebarProvider>
-            <Header />
-            <LayoutWrapper>
-              {children}
-            </LayoutWrapper>
-            <Toaster />
-            <Analytics />
-            <SpeedInsights />
-          </SidebarProvider>
-        </SessionProvider>
+    <html lang="en" className={`${inter.variable} ${outfit.variable}`} suppressHydrationWarning>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <SessionProvider>
+            <SidebarProvider>
+              <Header />
+              <LayoutWrapper>
+                {children}
+              </LayoutWrapper>
+              <Toaster />
+              <Analytics />
+              <SpeedInsights />
+            </SidebarProvider>
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

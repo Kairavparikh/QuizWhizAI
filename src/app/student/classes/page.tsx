@@ -12,7 +12,9 @@ import {
   GraduationCap,
   Users,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface Teacher {
   id: string;
@@ -136,8 +138,111 @@ export default function StudentClassesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading your classes...</div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/20">
+        <div className="relative">
+          {/* Animated background circles */}
+          <motion.div
+            className="absolute -inset-20 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-3xl"
+            animate={{
+              scale: [1, 1.2, 1],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+
+          {/* Main content */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative flex flex-col items-center gap-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl p-12 shadow-2xl border border-gray-200/50 dark:border-gray-700/50"
+          >
+            {/* Animated icon */}
+            <motion.div
+              animate={{
+                rotate: 360,
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+              className="relative"
+            >
+              <GraduationCap className="w-20 h-20 text-blue-600 dark:text-blue-400" />
+              <motion.div
+                className="absolute inset-0"
+                animate={{
+                  scale: [1, 1.3, 1],
+                  opacity: [0.5, 0, 0.5],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                <div className="w-full h-full rounded-full bg-blue-400/30" />
+              </motion.div>
+            </motion.div>
+
+            {/* Animated text */}
+            <div className="text-center">
+              <motion.h2
+                className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2"
+                animate={{
+                  opacity: [1, 0.7, 1],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                Loading Your Classes
+              </motion.h2>
+              <p className="text-gray-600 dark:text-gray-400">Please wait while we fetch your data...</p>
+            </div>
+
+            {/* Animated dots */}
+            <div className="flex gap-2">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-600 to-purple-600"
+                  animate={{
+                    y: [0, -20, 0],
+                    opacity: [1, 0.5, 1],
+                  }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    delay: i * 0.2,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-64 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"
+                animate={{
+                  x: ["-100%", "100%"],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            </div>
+          </motion.div>
+        </div>
       </div>
     );
   }

@@ -92,16 +92,78 @@ export async function GET(req: NextRequest) {
         strength: r.strength,
       }));
 
-    // Auto-detect relationships based on shared concepts
-    // This creates implicit edges between misconceptions with related concepts
-    const autoEdges: GraphEdge[] = [];
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const node1 = nodes[i];
-        const node2 = nodes[j];
+    // Helper function to extract generic category from concept
+    const extractGenericCategory = (concept: string): string => {
+      // Common generic categories to force separation
+      const categoryKeywords: { [key: string]: string } = {
+        // Programming concepts
+        'function': 'Functions & Methods',
+        'method': 'Functions & Methods',
+        'class': 'Classes & Objects',
+        'object': 'Classes & Objects',
+        'variable': 'Variables & Data',
+        'data': 'Variables & Data',
+        'array': 'Data Structures',
+        'list': 'Data Structures',
+        'structure': 'Data Structures',
+        'algorithm': 'Algorithms',
+        'loop': 'Control Flow',
+        'condition': 'Control Flow',
+        'if': 'Control Flow',
+        'while': 'Control Flow',
+        // General concepts
+        'analysis': 'Analysis & Evaluation',
+        'design': 'Design & Architecture',
+        'architecture': 'Design & Architecture',
+        'pattern': 'Design Patterns',
+        'test': 'Testing & QA',
+        'debug': 'Testing & QA',
+        'optimization': 'Performance',
+        'performance': 'Performance',
+        'security': 'Security',
+        'database': 'Databases',
+        'query': 'Databases',
+        'network': 'Networking',
+        'api': 'APIs & Integration',
+        'interface': 'APIs & Integration',
+        'ui': 'User Interface',
+        'ux': 'User Experience',
+      };
 
-        // If they share the same concept, create a relationship
-        if (node1.concept === node2.concept) {
+      const lowerConcept = concept.toLowerCase();
+
+      // Check for keyword matches
+      for (const [keyword, category] of Object.entries(categoryKeywords)) {
+        if (lowerConcept.includes(keyword)) {
+          return category;
+        }
+      }
+
+      // Fallback: use first significant word
+      const words = concept.split(/[\s,\-_:;\/]+/).filter(w => w.length > 3);
+      return words.length > 0 ? words[0].charAt(0).toUpperCase() + words[0].slice(1) : 'Miscellaneous';
+    };
+
+    // Re-assign nodes to generic categories to force separation
+    const categorizedNodes = nodes.map(node => ({
+      ...node,
+      group: extractGenericCategory(node.concept),
+    }));
+
+    // Auto-detect relationships based on group and concept similarity
+    // Connect nodes that are in the same group OR share exact concept
+    const autoEdges: GraphEdge[] = [];
+
+    for (let i = 0; i < categorizedNodes.length; i++) {
+      for (let j = i + 1; j < categorizedNodes.length; j++) {
+        const node1 = categorizedNodes[i];
+        const node2 = categorizedNodes[j];
+
+        // Connect if they share the same generic category OR exact same concept
+        const sameGroup = node1.group === node2.group;
+        const exactConceptMatch = node1.concept.toLowerCase() === node2.concept.toLowerCase();
+
+        if (sameGroup || exactConceptMatch) {
           // Check if this edge doesn't already exist
           const existsInManual = edges.some(
             (e) =>
@@ -119,8 +181,8 @@ export async function GET(req: NextRequest) {
             autoEdges.push({
               source: node1.id,
               target: node2.id,
-              relationshipType: "related_concept",
-              strength: 3,
+              relationshipType: exactConceptMatch ? "same_concept" : "same_category",
+              strength: exactConceptMatch ? 5 : 3,
             });
           }
         }
@@ -128,7 +190,7 @@ export async function GET(req: NextRequest) {
     }
 
     const graphData: GraphData = {
-      nodes,
+      nodes: categorizedNodes,
       edges: [...edges, ...autoEdges],
     };
 
