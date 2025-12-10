@@ -24,9 +24,15 @@ const ManageSubscription = () => {
           console.log("Response status:", response.status);
 
           if (!response.ok) {
-            const errorText = await response.text();
-            console.error("API error:", errorText);
-            alert(`API Error: ${response.status} - ${errorText}`);
+            const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+            console.error("API error:", errorData);
+
+            let errorMessage = `Error: ${errorData.error || 'Failed to load portal'}`;
+            if (errorData.message) {
+              errorMessage += `\n${errorData.message}`;
+            }
+
+            alert(errorMessage);
             setLoading(false);
             return;
           }
@@ -43,7 +49,7 @@ const ManageSubscription = () => {
           }
 
           console.log("Redirecting to customer portal");
-          router.push(data.url);
+          window.location.href = data.url;
         } catch (error) {
           setLoading(false);
           console.error('Subscribe Button Error', error);
