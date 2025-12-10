@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { classMembers, quizAssignments, quizzSubmissions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-// GET - Fetch all classes a student is enrolled in with assignments
+// Fetch all classes a student is enrolled in with assignments
 export async function GET(req: NextRequest) {
   const session = await auth();
   const userId = session?.user?.id;
