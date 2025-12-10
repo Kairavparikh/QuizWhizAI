@@ -661,7 +661,7 @@ export default function MisconceptionsPage() {
             <div>
               <p className="font-semibold text-blue-700 dark:text-blue-300 mb-1">In Progress (Resolving)</p>
               <p className="text-gray-600 dark:text-gray-400">
-                You've answered correctly once with high confidence. One more to master it!
+                You&apos;ve answered correctly once with high confidence. One more to master it!
               </p>
             </div>
           </div>
@@ -670,7 +670,7 @@ export default function MisconceptionsPage() {
             <div>
               <p className="font-semibold text-green-700 dark:text-green-300 mb-1">Mastered (Resolved)</p>
               <p className="text-gray-600 dark:text-gray-400">
-                You've demonstrated mastery with 2+ correct answers with high confidence. Great job!
+                You&apos;ve demonstrated mastery with 2+ correct answers with high confidence. Great job!
               </p>
             </div>
           </div>
