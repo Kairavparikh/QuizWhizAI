@@ -36,8 +36,36 @@ export async function POST(req: Request) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
+    // Verify customer exists in Stripe, create new one if not
+    let customerId = user.stripeCustomerId;
+    try {
+      await stripe.customers.retrieve(customerId);
+    } catch (customerError: any) {
+      if (customerError.code === 'resource_missing') {
+        console.log(`Customer ${customerId} not found in Stripe, creating new customer`);
+
+        // Create new customer
+        const newCustomer = await stripe.customers.create({
+          email: user.email || undefined,
+          metadata: {
+            dbId: userId,
+          },
+        });
+
+        // Update database with new customer ID
+        await db
+          .update(users)
+          .set({ stripeCustomerId: newCustomer.id })
+          .where(eq(users.id, userId));
+
+        customerId = newCustomer.id;
+      } else {
+        throw customerError;
+      }
+    }
+
     const sessionResponse = await stripe.billingPortal.sessions.create({
-      customer: user.stripeCustomerId,
+      customer: customerId,
       return_url: `${baseUrl}/billing`,
     });
 
