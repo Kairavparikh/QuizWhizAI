@@ -1,10 +1,10 @@
 "use server";
 
 import {db} from "@/db";
-import { quizzSubmissions, quizzes, users, notifications, quizAssignments } from "@/db/schema";
+import { quizzSubmissions, quizzes, users, notifications, quizAssignments, questions, questionMisconceptions, misconceptions } from "@/db/schema";
 import {auth} from "@/auth";
 import { InferInsertModel } from "drizzle-orm";
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNull, and, inArray } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 type Submission = InferInsertModel<typeof quizzSubmissions>;
@@ -78,6 +78,59 @@ export async function saveSubmission(sub: Submission, quizzId: number){
         }
     } catch (error) {
         console.error("Error sending quiz graded notification:", error);
+    }
+
+    // Check if this is an adaptive quiz and if score >= 75%, resolve misconceptions
+    try {
+        if (score !== null && score !== undefined && score >= 75) {
+            // Get all questions for this quiz
+            const quizQuestions = await db.query.questions.findMany({
+                where: eq(questions.quizzId, quizzId),
+            });
+
+            if (quizQuestions.length > 0) {
+                const questionIds = quizQuestions.map(q => q.id);
+
+                // Find all misconceptions linked to these questions
+                const linkedMisconceptions = await db.query.questionMisconceptions.findMany({
+                    where: inArray(questionMisconceptions.questionId, questionIds),
+                    with: {
+                        misconception: true,
+                    },
+                });
+
+                // Extract unique misconception IDs that belong to this user
+                const misconceptionIds = new Set<number>();
+                for (const link of linkedMisconceptions) {
+                    if (link.misconception.userId === userId) {
+                        misconceptionIds.add(link.misconception.id);
+                    }
+                }
+
+                // If we found misconceptions, mark them as resolved
+                if (misconceptionIds.size > 0) {
+                    const idsArray = Array.from(misconceptionIds);
+
+                    await db
+                        .update(misconceptions)
+                        .set({
+                            status: "resolved",
+                            resolvedAt: new Date(),
+                            lastTestedAt: new Date(),
+                        })
+                        .where(
+                            and(
+                                inArray(misconceptions.id, idsArray),
+                                eq(misconceptions.userId, userId)
+                            )
+                        );
+
+                    console.log(`Resolved ${misconceptionIds.size} misconception(s) for user ${userId} after scoring ${score}% on quiz ${quizzId}`);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error resolving misconceptions on high score:", error);
     }
 
     return subissionId;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Brain, TrendingUp, CheckCircle, AlertCircle, Target, Sparkles, ArrowLeft, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
+import { Brain, TrendingUp, CheckCircle, AlertCircle, Target, Sparkles, ArrowLeft, ChevronDown, ChevronRight, Trash2, Loader2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { AlertDialog as AlertDialogComponent } from "@/components/ui/AlertDialog";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -195,13 +195,16 @@ export default function MisconceptionsPage() {
           : `/quizz/${data.quizzId}`;
         router.push(quizUrl);
       } else {
-        alert("Failed to generate adaptive quiz");
+        setGeneratingQuiz(false);
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        setAlertMessage(errorData.error || "Failed to generate adaptive quiz");
+        setShowErrorAlert(true);
       }
     } catch (error) {
       console.error("Error generating adaptive quiz:", error);
-      alert("Error generating adaptive quiz");
-    } finally {
       setGeneratingQuiz(false);
+      setAlertMessage("Error generating adaptive quiz. Please try again.");
+      setShowErrorAlert(true);
     }
   };
 
@@ -640,6 +643,35 @@ export default function MisconceptionsPage() {
         message={alertMessage}
         variant="error"
       />
+
+      {/* Loading Screen for Quiz Generation */}
+      {generatingQuiz && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-12 max-w-md mx-4 shadow-2xl">
+            <div className="text-center">
+              <div className="mb-6 relative">
+                <div className="w-24 h-24 mx-auto bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                  <Sparkles className="w-12 h-12 text-white" />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="w-32 h-32 text-purple-500 animate-spin" style={{ animationDuration: '3s' }} />
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+                Generating Your Adaptive Quiz
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-2">
+                Creating personalized questions to target your misconceptions...
+              </p>
+              <div className="flex items-center justify-center gap-1 mt-4">
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Status Explanation - Bottom Info */}
       <div className="mt-12 mb-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700 p-6">
