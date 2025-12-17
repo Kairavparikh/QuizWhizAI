@@ -27,12 +27,49 @@ export const POST = async (req: Request) => {
     const user = await db.query.users.findFirst({
         where: eq(users.id, userId)
     });
+
+    if (!user) {
+        return new Response(
+            JSON.stringify({
+                error: "User not found"
+            }),
+            {
+                status: 404
+            }
+        )
+    }
+
     let customer;
     if(user?.stripeCustomerId){
-        customer = {
-            id: user.stripeCustomerId
-        };
-        console.log("Using existing customer:", customer.id);
+        // Verify customer exists in Stripe
+        try {
+            const existingCustomer = await stripe.customers.retrieve(user.stripeCustomerId);
+            if (existingCustomer.deleted) {
+                throw new Error("Customer was deleted");
+            }
+            customer = {
+                id: user.stripeCustomerId
+            };
+            console.log("Using existing customer:", customer.id);
+        } catch (customerError: any) {
+            // Customer doesn't exist in Stripe, create new one
+            console.log("Customer not found in Stripe, creating new customer");
+            const response = await stripe.customers.create({
+                email: user.email || undefined,
+                metadata: {
+                    dbId: userId
+                }
+            });
+
+            customer = {id: response.id};
+            console.log("Created new customer:", customer.id);
+
+            // Update database with new customer ID
+            await db.update(users).set({
+                stripeCustomerId: customer.id,
+            })
+            .where(eq(users.id, userId));
+        }
     }
     else{
         console.log("Creating new customer for user:", userId);
@@ -40,10 +77,15 @@ export const POST = async (req: Request) => {
             metadata: {
                 dbId: string
             };
+            email?: string;
         } = {
             metadata: {
                 dbId: userId
             }
+        }
+
+        if (user.email) {
+            customerData.email = user.email;
         }
 
         const response = await stripe.customers.create(

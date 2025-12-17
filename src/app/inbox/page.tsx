@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Bell, Trash2, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface Notification {
   id: number;
@@ -25,6 +26,7 @@ export default function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>("all");
   const router = useRouter();
+  const { data: session } = useSession();
 
   const fetchNotifications = async () => {
     try {
@@ -98,8 +100,13 @@ export default function InboxPage() {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    // Route to student classes page
-    router.push(`/student/classes`);
+    // Route based on user role
+    const userRole = (session?.user as any)?.role;
+    if (userRole === "TEACHER") {
+      router.push(`/teacher/dashboard`);
+    } else {
+      router.push(`/student/classes`);
+    }
   };
 
   const getNotificationIcon = (type: string) => {

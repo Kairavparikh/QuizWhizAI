@@ -8,6 +8,10 @@ import { useRouter } from "next/navigation";
 import { motion, useInView } from "framer-motion";
 import { useState, useRef } from "react";
 
+// Price IDs for all plans
+const PREMIUM_STUDENT_PRICE_ID = PRICE_ID; // $4.99/month
+const EDUCATION_PRICE_ID = process.env.NEXT_PUBLIC_EDUCATION_PRICE_ID || "price_1SUDHbDJtFkaXjyBAhpySPCT"; // $9.99/month
+
 interface PricingTableProps {
   isSubscribed: boolean;
 }
@@ -42,26 +46,15 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
       });
 
       console.log("Response status:", response.status);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-
-      const responseText = await response.text();
-      console.log("Raw response:", responseText);
 
       if (!response.ok) {
-        console.error("API error:", responseText);
-        alert(`API Error: ${response.status} - ${responseText}`);
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error("API error:", errorData);
+        alert(`Failed to create checkout: ${errorData.error || "Unknown error"}`);
         return;
       }
 
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error("Failed to parse JSON:", parseError);
-        alert("Invalid response from server");
-        return;
-      }
-
+      const data = await response.json();
       console.log("Parsed response data:", data);
 
       if (!data.sessionId) {
@@ -94,20 +87,68 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
 
   const handleUpgradeTeacher = async () => {
     try {
+      console.log("Creating teacher checkout session...");
       const response = await fetch("/api/stripe/create-teacher-checkout", {
         method: "POST",
       });
 
+      console.log("Response status:", response.status);
+
       if (response.ok) {
-        const { url } = await response.json();
-        window.location.href = url;
+        const data = await response.json();
+        console.log("Response data:", data);
+
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          console.error("No URL in response");
+          alert("Failed to create checkout session: No redirect URL received");
+        }
       } else {
-        console.error("Failed to create checkout session");
-        alert("Failed to create checkout session");
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error("API error:", errorData);
+        alert(`Failed to create checkout session: ${errorData.error || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error creating checkout:", error);
-      alert("Error creating checkout");
+      alert(`Error creating checkout: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
+
+  const handleUpdateSubscription = async (priceId: string, planName: string) => {
+    try {
+      console.log(`Updating subscription to ${planName} with price ID:`, priceId);
+
+      const response = await fetch("/api/stripe/update-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ priceId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API error:", errorData);
+
+        // If no active subscription, guide user to create new one
+        if (errorData.action === "create_new") {
+          alert(`${errorData.error}\n\nPlease subscribe to a plan first by clicking the upgrade button.`);
+        } else {
+          alert(`Failed to update subscription: ${errorData.error || "Unknown error"}`);
+        }
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Subscription updated successfully:", data);
+      alert(`Successfully switched to ${planName}! Your subscription has been updated.`);
+
+      // Refresh the page to show updated plan
+      router.refresh();
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      alert(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };
 
@@ -122,6 +163,7 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
       period: "forever",
       description: "Perfect for trying out QuizWhiz",
       icon: Sparkles,
+      priceId: null,
       features: [
         "3 quiz uploads",
         "Basic quiz generation",
@@ -133,9 +175,9 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
         "No misconception tracking",
         "No analytics"
       ],
-      buttonText: "Current Plan",
-      buttonDisabled: true,
-      buttonAction: undefined,
+      buttonText: !isSubscribed ? "Current Plan" : "Downgrade to Free",
+      buttonDisabled: !isSubscribed, // Only disabled if currently on free plan
+      buttonAction: isSubscribed ? () => router.push("/api/stripe/create-portal") : undefined,
       isCurrent: !isSubscribed,
       gradient: "from-gray-500 to-gray-700",
       bgColor: "bg-gray-50 dark:bg-gray-900/50",
@@ -149,6 +191,7 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
       description: "Supercharge your learning journey",
       icon: Zap,
       badge: "Most Popular",
+      priceId: PREMIUM_STUDENT_PRICE_ID,
       features: [
         "Unlimited quiz uploads",
         "Advanced AI quiz generation",
@@ -158,9 +201,18 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
         "Download quiz notes"
       ],
       limitations: [],
-      buttonText: isSubscribed && userRole === "STUDENT" ? "Current Plan" : "Upgrade to Premium",
-      buttonDisabled: (userRole === "STUDENT" && isSubscribed) || userRole !== "STUDENT",
-      buttonAction: userRole === "STUDENT" ? handleUpgradeStudent : undefined,
+      buttonText: (() => {
+        if (isSubscribed && userRole === "STUDENT") return "Current Plan";
+        if (isSubscribed && userRole === "TEACHER") return "Switch to Student";
+        if (!isSubscribed && userRole === "STUDENT") return "Upgrade to Premium";
+        return "Switch to Student Plan";
+      })(),
+      buttonDisabled: isSubscribed && userRole === "STUDENT", // Only disabled if current plan
+      buttonAction: (() => {
+        if (isSubscribed && userRole === "STUDENT") return undefined; // Current plan
+        if (isSubscribed) return () => handleUpdateSubscription(PREMIUM_STUDENT_PRICE_ID, "Premium Student");
+        return handleUpgradeStudent; // New subscription
+      })(),
       isCurrent: isSubscribed && userRole === "STUDENT",
       gradient: "from-blue-600 via-purple-600 to-pink-600",
       bgColor: "bg-blue-50 dark:bg-blue-950/30",
@@ -174,6 +226,7 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
       period: "per month",
       description: "Built for educators and classrooms",
       icon: GraduationCap,
+      priceId: EDUCATION_PRICE_ID,
       features: [
         "Everything in Premium",
         "Create unlimited classes",
@@ -184,9 +237,18 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
         "Export detailed reports"
       ],
       limitations: [],
-      buttonText: isSubscribed && userRole === "TEACHER" ? "Current Plan" : "Upgrade to Education",
-      buttonDisabled: (userRole === "TEACHER" && isSubscribed) || userRole !== "TEACHER",
-      buttonAction: userRole === "TEACHER" ? handleUpgradeTeacher : undefined,
+      buttonText: (() => {
+        if (isSubscribed && userRole === "TEACHER") return "Current Plan";
+        if (isSubscribed && userRole === "STUDENT") return "Switch to Teacher";
+        if (!isSubscribed && userRole === "TEACHER") return "Upgrade to Education";
+        return "Switch to Teacher Plan";
+      })(),
+      buttonDisabled: isSubscribed && userRole === "TEACHER", // Only disabled if current plan
+      buttonAction: (() => {
+        if (isSubscribed && userRole === "TEACHER") return undefined; // Current plan
+        if (isSubscribed) return () => handleUpdateSubscription(EDUCATION_PRICE_ID, "Education");
+        return handleUpgradeTeacher; // New subscription
+      })(),
       isCurrent: isSubscribed && userRole === "TEACHER",
       gradient: "from-green-600 via-emerald-600 to-teal-600",
       bgColor: "bg-green-50 dark:bg-green-950/30",

@@ -12,6 +12,7 @@ import {
 } from "./ui/dropdown-menu";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface Notification {
   id: number;
@@ -29,6 +30,7 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const { data: session } = useSession();
 
   // Fetch unread count
   const fetchUnreadCount = async () => {
@@ -113,8 +115,13 @@ export function NotificationBell() {
     if (!notification.read) {
       await markAsRead(notification.id);
     }
-    // Route to student classes page
-    router.push(`/student/classes`);
+    // Route based on user role
+    const userRole = (session?.user as any)?.role;
+    if (userRole === "TEACHER") {
+      router.push(`/teacher/dashboard`);
+    } else {
+      router.push(`/student/classes`);
+    }
     setIsOpen(false);
   };
 

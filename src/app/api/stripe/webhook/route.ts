@@ -67,6 +67,19 @@ export const POST = async (req: Request) => {
         });
         break;
 
+      case "customer.subscription.updated":
+        // Ensure subscription is still marked as active after plan change
+        if (data.status === "active") {
+          await createSubscription({
+            stripeCustomerId: data.customer as string,
+          });
+        } else if (data.status === "canceled" || data.status === "unpaid") {
+          await deleteSubscription({
+            stripeCustomerId: data.customer as string,
+          });
+        }
+        break;
+
       case "customer.subscription.deleted":
         await deleteSubscription({
           stripeCustomerId: data.customer as string,
