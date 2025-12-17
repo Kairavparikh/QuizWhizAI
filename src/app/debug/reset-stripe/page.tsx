@@ -42,7 +42,7 @@ export default function ResetStripePage() {
         <CardHeader>
           <CardTitle>Reset Stripe Customer Data</CardTitle>
           <CardDescription>
-            Use this tool to reset your Stripe customer information if you're experiencing
+            Use this tool to reset your Stripe customer information if you&apos;re experiencing
             subscription errors.
           </CardDescription>
         </CardHeader>
@@ -50,7 +50,7 @@ export default function ResetStripePage() {
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
               <strong>Warning:</strong> This will clear your current Stripe customer ID and
-              subscription status. Use this only if you're getting errors like "No such customer".
+              subscription status. Use this only if you&apos;re getting errors like &quot;No such customer&quot;.
             </p>
           </div>
 

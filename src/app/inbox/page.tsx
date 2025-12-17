@@ -61,6 +61,7 @@ export default function InboxPage() {
 
   useEffect(() => {
     fetchNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const markAsRead = async (notificationId: number) => {
