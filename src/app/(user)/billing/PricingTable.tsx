@@ -152,6 +152,41 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
     }
   };
 
+  const handleDowngradeToFree = async () => {
+    try {
+      console.log("Opening Stripe portal to downgrade to Free plan...");
+
+      const response = await fetch("/api/stripe/create-portal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error("API error:", errorData);
+        alert(`Failed to load portal: ${errorData.error || "Unknown error"}`);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Portal URL received:", data.url);
+
+      if (!data.url || typeof data.url !== "string") {
+        console.error("No valid URL in response");
+        alert("No valid portal URL received");
+        return;
+      }
+
+      // Redirect to Stripe Customer Portal
+      window.location.href = data.url;
+    } catch (error) {
+      console.error("Error opening portal:", error);
+      alert(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
+
   const currentPlanName = isSubscribed
     ? (userRole === "TEACHER" ? "Education" : "Premium Student")
     : "Free";
@@ -177,7 +212,7 @@ const PricingTable = ({ isSubscribed }: PricingTableProps) => {
       ],
       buttonText: !isSubscribed ? "Current Plan" : "Downgrade to Free",
       buttonDisabled: !isSubscribed, // Only disabled if currently on free plan
-      buttonAction: isSubscribed ? () => router.push("/api/stripe/create-portal") : undefined,
+      buttonAction: isSubscribed ? handleDowngradeToFree : undefined,
       isCurrent: !isSubscribed,
       gradient: "from-gray-500 to-gray-700",
       bgColor: "bg-gray-50 dark:bg-gray-900/50",
