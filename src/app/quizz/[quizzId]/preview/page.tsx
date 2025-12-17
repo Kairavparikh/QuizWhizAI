@@ -49,6 +49,7 @@ export default function QuizPreviewPage() {
   useEffect(() => {
     fetchQuiz();
     fetchClasses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizzId]);
 
   const fetchQuiz = async () => {

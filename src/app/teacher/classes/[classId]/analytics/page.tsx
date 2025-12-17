@@ -35,6 +35,7 @@ export default function ClassAnalyticsPage() {
   useEffect(() => {
     fetchAnalytics();
     fetchClassData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classId]);
 
   const fetchClassData = async () => {

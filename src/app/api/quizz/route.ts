@@ -4,6 +4,8 @@ import { db } from "@/db";
 import { quizzes } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 
+export const dynamic = 'force-dynamic';
+
 // GET - Fetch all quizzes for the current user
 export async function GET(request: NextRequest) {
     try {

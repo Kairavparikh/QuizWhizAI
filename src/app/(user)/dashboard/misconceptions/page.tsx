@@ -79,6 +79,7 @@ export default function MisconceptionsPage() {
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFolderId]);
 
   const fetchProfile = async () => {

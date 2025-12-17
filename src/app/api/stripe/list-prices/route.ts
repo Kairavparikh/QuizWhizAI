@@ -10,18 +10,32 @@ export async function GET() {
     });
 
     // Format the response nicely
-    const formattedPrices = prices.data.map((price) => ({
-      id: price.id,
-      amount: price.unit_amount ? price.unit_amount / 100 : 0,
-      currency: price.currency,
-      interval: price.recurring?.interval || "one-time",
-      product: {
-        id: typeof price.product === "string" ? price.product : price.product?.id,
-        name: typeof price.product === "object" ? price.product?.name : "Unknown",
-      },
-      active: price.active,
-      created: new Date(price.created * 1000).toISOString(),
-    }));
+    const formattedPrices = prices.data.map((price) => {
+      let productName = "Unknown";
+      let productId = "";
+
+      if (typeof price.product === "string") {
+        productId = price.product;
+      } else if (price.product && "id" in price.product) {
+        productId = price.product.id;
+        if ("name" in price.product) {
+          productName = price.product.name || "Unknown";
+        }
+      }
+
+      return {
+        id: price.id,
+        amount: price.unit_amount ? price.unit_amount / 100 : 0,
+        currency: price.currency,
+        interval: price.recurring?.interval || "one-time",
+        product: {
+          id: productId,
+          name: productName,
+        },
+        active: price.active,
+        created: new Date(price.created * 1000).toISOString(),
+      };
+    });
 
     return NextResponse.json({
       success: true,

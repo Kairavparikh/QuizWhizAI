@@ -54,6 +54,7 @@ export default function MisconceptionGraphPage() {
 
   useEffect(() => {
     fetchGraphData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [includeResolved]);
 
   const fetchGraphData = async () => {
