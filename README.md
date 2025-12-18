@@ -24,11 +24,17 @@ An AI-powered quiz generation platform that transforms documents into interactiv
 - **Confidence Mapping**: Track both answer correctness and user confidence levels
 - **Four Learning States Classification**:
   - 🔥 **High Confidence Wrong** (Misconceptions) - Priority 1
-  - 📚 **Low Confidence Wrong** (Known Weaknesses) - Priority 2  
+  - 📚 **Low Confidence Wrong** (Known Weaknesses) - Priority 2
   - 💡 **Low Confidence Correct** (Underconfident Mastery) - Priority 3
   - ✅ **High Confidence Correct** (True Mastery) - Priority 4
 - **Spaced Repetition System**: Automated review scheduling based on learning states
 - **Personalized Study Plans**: AI-generated recommendations for optimal learning paths
+- **Misconception Tracking System**:
+  - Three-status tracking (Active, Resolving, Resolved)
+  - Misconception strength metric (1-10 scale)
+  - Automatic status updates based on performance
+  - Concept grouping for related misconceptions
+  - Individual and bulk misconception management
 
 ### 🎯 Adaptive Study Assistant
 - **Smart Review Interface**: AI chatbot for personalized study assistance
@@ -39,20 +45,55 @@ An AI-powered quiz generation platform that transforms documents into interactiv
 
 ### 📊 Comprehensive Dashboard
 - **Performance Metrics**: Track quiz attempts, scores, and improvement over time
-- **Activity Heatmap**: Visual representation of learning activity patterns
+- **Activity Heatmap**: Visual representation of learning activity patterns and submission trends
+- **Knowledge Galaxy Visualization**: Interactive force-directed graph showing misconception networks
+  - Color-coded nodes by status (Active/Resolving/Resolved)
+  - Node size represents misconception strength
+  - Visual learning path tracking
 - **Learning Analytics**: Detailed breakdown of strengths and weaknesses
 - **Progress Tracking**: Monitor improvement across different topics and time periods
+- **Metric Cards**: Animated summary cards with key performance indicators
 
 ### 💳 Subscription Management
 - **Free Trial System**: Limited quiz generation for new users
 - **Premium Subscriptions**: Unlimited quiz generation and advanced features
+- **Multiple Pricing Tiers**: Student ($4.99/month) and Education ($9.99/month) plans
 - **Stripe Integration**: Secure payment processing with webhook support
 - **Subscription Portal**: Self-service billing management
+- **Plan Upgrades & Downgrades**: Seamless plan changes with automatic proration
+- **Mid-Cycle Plan Changes**: Update subscriptions at any time with fair billing
 
 ### 🔒 Security & Authentication
 - **Google OAuth**: Secure authentication with NextAuth.js
 - **Protected Routes**: User-specific content and data isolation
 - **Session Management**: Secure session handling and user state management
+
+### 👨‍🏫 Teacher Features
+- **Class Management**: Create and manage multiple classes
+- **Assignment Distribution**: Post quizzes to entire classes
+- **Comprehensive Analytics Dashboard**:
+  - Class-level performance metrics and mastery levels
+  - Learning state distribution across all students
+  - Topic mastery analysis with misconception tracking
+  - Performance trends over time
+  - AI-generated recommendations for intervention
+  - Student-by-student performance breakdowns
+- **Announcement System**:
+  - Post class-wide announcements
+  - Optional email delivery to all students
+  - Read tracking and engagement analytics
+  - Real-time read status updates
+- **Student Roster Management**: Track student enrollment and activity
+
+### 📧 Email Notification System
+- **Automated Notifications** via Resend:
+  - Assignment posted alerts
+  - Quiz graded notifications with scores
+  - Class announcements
+  - Student enrollment confirmations
+- **Professional Email Templates**: HTML-formatted with branding
+- **Contextual Information**: Due dates, scores, class details
+- **Direct Links**: One-click access to assignments and results
 
 ---
 
@@ -77,6 +118,10 @@ An AI-powered quiz generation platform that transforms documents into interactiv
 - **Quizzes & Questions**: Quiz content and structure
 - **Learning Analytics**: Confidence tracking and spaced repetition
 - **Subscription Management**: Billing and usage tracking
+- **Misconceptions**: Tracking system with status and strength metrics
+- **Classes & Enrollments**: Teacher-student relationships
+- **Announcements & Notifications**: Communication system
+- **Analytics**: Performance tracking and reporting
 
 ---
 
@@ -105,6 +150,8 @@ type LearningState =
 - **Interactive Chat**: Natural language conversations about quiz topics
 - **Misconception Addressing**: Targeted explanations for common mistakes
 - **Adaptive Difficulty**: Adjusts explanation complexity based on user performance
+- **Adaptive Quiz Generation**: Create targeted practice quizzes for specific misconceptions
+- **Concept Grouping**: Automatically groups related misconceptions for focused study
 
 ---
 
@@ -136,6 +183,9 @@ STRIPE_SECRET_KEY="sk_..."
 STRIPE_PUBLISHABLE_KEY="pk_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 NEXT_PUBLIC_PUBLISHABLE_KEY="pk_..."
+
+# Email Notifications
+RESEND_API_KEY="re_..."
 
 # Application
 NEXT_PUBLIC_BASE_URL="http://localhost:3000"
@@ -176,12 +226,13 @@ npm run dev
 
 ---
 
-## 📊 Usage Analytics
+## 📊 Platform Metrics
 
-- **20+ Active Users** across multiple educational institutions
-- **300+ Questions** answered with detailed analytics
-- **80+ Quizzes** completed with learning insights
-- **95% User Satisfaction** with AI-generated explanations
+- **Active Users** across multiple educational institutions
+- **Comprehensive Analytics** tracking every interaction
+- **Misconception Resolution** tracking with strength metrics
+- **High Engagement** with interactive visualizations and adaptive learning
+- **Email Delivery** for seamless communication between teachers and students
 
 ---
 
@@ -191,11 +242,26 @@ npm run dev
 src/
 ├── app/
 │   ├── (user)/              # Protected user routes
-│   │   ├── dashboard/       # Analytics and metrics
+│   │   ├── dashboard/       # Student analytics and metrics
+│   │   │   ├── misconceptions/  # Misconception tracking
+│   │   │   │   └── graph/       # Knowledge Galaxy visualization
+│   │   │   └── heatMap.tsx      # Activity heatmap
 │   │   └── billing/         # Subscription management
+│   ├── teacher/             # Teacher-specific routes
+│   │   └── classes/         # Class management
+│   │       └── [classId]/   # Individual class features
+│   │           └── analytics/   # Teacher analytics dashboard
 │   ├── api/                 # Backend API routes
 │   │   ├── quizz/          # Quiz generation and management
-│   │   └── stripe/         # Payment processing
+│   │   ├── stripe/         # Payment processing
+│   │   │   └── update-subscription/  # Plan changes
+│   │   ├── misconception/  # Misconception tracking
+│   │   │   ├── update-on-correct/   # Status updates
+│   │   │   └── generate-adaptive-quiz/  # Adaptive quizzes
+│   │   └── classes/        # Class management
+│   │       └── [classId]/
+│   │           ├── analytics/     # Class analytics API
+│   │           └── announcements/ # Announcement system
 │   ├── quizz/              # Core quiz functionality
 │   │   ├── QuizzQuestions.tsx    # Quiz interface
 │   │   ├── SmartReviewInterface.tsx  # AI study assistant
@@ -203,8 +269,13 @@ src/
 │   │   └── PersonalizedStudyPlan.tsx # Study recommendations
 │   └── actions/            # Server actions
 ├── components/             # Reusable UI components
+│   ├── misconceptions/     # Misconception components
+│   │   └── KnowledgeGalaxy.tsx   # Force-directed graph
+│   ├── AnnouncementModal.tsx     # Create announcements
+│   └── AnnouncementsHistory.tsx  # View announcements
 ├── db/                    # Database schema and connection
 ├── lib/                   # Utilities and configurations
+│   └── email.ts           # Email notification system
 └── auth.ts               # Authentication setup
 ```
 
@@ -214,10 +285,12 @@ src/
 
 - **Mobile App**: React Native version for iOS/Android
 - **Collaborative Learning**: Team quizzes and shared study sessions
-- **Advanced Analytics**: ML-powered learning pattern recognition
+- **Advanced ML Analytics**: Pattern recognition for learning predictions
 - **Content Library**: Pre-built quizzes for common subjects
-- **API Integration**: Connect with learning management systems
+- **LMS Integration**: Connect with Canvas, Blackboard, Moodle
 - **Offline Mode**: Download quizzes for offline study
+- **Parent Portal**: Track student progress for parents
+- **Gamification**: Achievement badges and leaderboards
 
 ---
 
@@ -242,8 +315,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **OpenAI** for GPT-4 integration
 - **Vercel** for hosting and deployment
 - **Stripe** for payment processing
+- **Resend** for email delivery
 - **Shadcn/ui** for beautiful UI components
 - **Drizzle** for type-safe database operations
+- **react-force-graph** for knowledge visualization
 
 ---
 
@@ -254,89 +329,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 [Report Bug](https://github.com/Kairavparikh/QuizWhizAI/issues) · [Request Feature](https://github.com/Kairavparikh/QuizWhizAI/issues) · [Documentation](https://github.com/Kairavparikh/QuizWhizAI/wiki)
 
 </div>
-cd QuizWhizAI
-```
-
-2. **Install dependencies**
-```bash
-npm install
-```
-
-3. **Set up environment variables**
-Create a `.env.local` file:
-```env
-# Database
-DATABASE_URL="your-postgresql-url"
-
-# OpenAI
-OPENAI_API_KEY="your-openai-api-key"
-
-# NextAuth
-NEXTAUTH_SECRET="your-nextauth-secret"
-NEXTAUTH_URL="http://localhost:3000"
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-
-# Stripe
-STRIPE_SECRET_KEY="your-stripe-secret-key"
-STRIPE_PUBLISHABLE_KEY="your-stripe-publishable-key"
-STRIPE_WEBHOOK_LOCAL_SECRET="your-stripe-webhook-secret"
-```
-
-4. **Set up the database**
-```bash
-npm run db:generate
-npm run db:push
-```
-
-5. **Run the development server**
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) to see the application.
-
-## 📖 Usage
-
-1. **Sign in** with your Google account
-2. **Upload a document** (PDF, DOC, etc.)
-3. **Generate a quiz** - AI creates personalized questions
-4. **Take the quiz** with real-time feedback
-5. **Track your progress** in the analytics dashboard
-
-## 📁 Project Structure
-
-```
-src/
-├── app/
-│   ├── api/           # API routes
-│   ├── (user)/        # Protected user routes
-│   └── quizz/         # Quiz functionality
-├── components/         # Reusable UI components
-├── db/                # Database schema and connection
-├── lib/               # Utility functions
-└── auth.ts            # NextAuth configuration
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- OpenAI for GPT-4 integration
-- Vercel for hosting and deployment
-- Shadcn/ui for beautiful components
-- The amazing open-source community
-
----
-
-**Built with ❤️ for better learning experiences**
