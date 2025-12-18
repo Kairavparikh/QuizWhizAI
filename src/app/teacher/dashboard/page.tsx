@@ -69,7 +69,7 @@ export default function TeacherDashboardPage() {
           <Button
             onClick={() => setShowCreateModal(true)}
             size="lg"
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            className="bg-purple-600 hover:bg-purple-700"
           >
             <Plus className="w-5 h-5 mr-2" />
             Create New Class
@@ -127,7 +127,7 @@ export default function TeacherDashboardPage() {
           <Button
             onClick={() => setShowCreateModal(true)}
             size="lg"
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            className="bg-purple-600 hover:bg-purple-700"
           >
             <Plus className="w-5 h-5 mr-2" />
             Create Your First Class
@@ -332,7 +332,7 @@ function CreateClassModal({ onClose, onSuccess }: { onClose: () => void; onSucce
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              className="flex-1 bg-purple-600 hover:bg-purple-700"
               disabled={creating}
             >
               {creating ? "Creating..." : "Create Class"}

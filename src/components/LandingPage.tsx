@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useRef, useState, useEffect } from "react";
+import Footer from "@/components/Footer";
 import {
   BookOpen,
   Brain,
@@ -235,7 +236,7 @@ export default function LandingPage({ isAuthenticated, userRole }: LandingPagePr
               {!isAuthenticated ? (
                 <Link href="/api/auth/signin">
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg px-8 py-6 rounded-xl shadow-lg">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-6 rounded-xl shadow-lg">
                       <Rocket className="w-5 h-5 mr-2" />
                       Get Started Free
                     </Button>
@@ -244,7 +245,7 @@ export default function LandingPage({ isAuthenticated, userRole }: LandingPagePr
               ) : (
                 <Link href={userRole === "TEACHER" ? "/teacher/dashboard" : "/dashboard"}>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg px-8 py-6 rounded-xl shadow-lg">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-6 rounded-xl shadow-lg">
                       Go to Dashboard
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
@@ -569,6 +570,9 @@ export default function LandingPage({ isAuthenticated, userRole }: LandingPagePr
           </motion.div>
         </div>
       </section>
+
+      {/* Footer */}
+      <Footer />
 
     </div>
   );
